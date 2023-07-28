@@ -1,3 +1,4 @@
+import { EmbeddingFrequencies, SparseValues, SparseValuesBuilder } from "./types";
 /**
  * Builds sparse values using a naive approach.
  * 
@@ -17,7 +18,7 @@
  * // sparseValues = { indices: [1, 2, 3, 5], values: [3, 2, 3, 1] }
  * ```
 */
-export class NaiveSparseValueBuilder implements SparseValueBuilder {
+export class NaiveSparseValuesBuilder implements SparseValuesBuilder {
   embeddings: Array<number>;
 
   constructor(embeddings: Array<number>) {
@@ -32,7 +33,7 @@ export class NaiveSparseValueBuilder implements SparseValueBuilder {
    * @example
    * ```ts
    * const embeddingValues = [1, 2, 3, 2, 3, 1, 5, 3, 1];
-   * const sparseValuesBuilder = new NaiveSparseValueBuilder(embeddingValues);
+   * const sparseValuesBuilder = new NaiveSparseValuesBuilder(embeddingValues);
    * const sparseValues = sparseValuesBuilder.build();
    * // sparseValues = { indices: [1, 2, 3, 5], values: [3, 2, 3, 1] }
    * ```
@@ -44,7 +45,7 @@ export class NaiveSparseValueBuilder implements SparseValueBuilder {
     for (const token in embeddingFrequencies) {
       sparseValues.indices.push(parseInt(token));
       sparseValues.values.push(embeddingFrequencies[token]);
-    };
+    }
     return sparseValues;
   }
 
@@ -56,7 +57,7 @@ export class NaiveSparseValueBuilder implements SparseValueBuilder {
      * @returns {EmbeddingFrequencies}
      * 
   */
-  buildEmbeddingFrequencies(): EmbeddingFrequencies {
+  private buildEmbeddingFrequencies(): EmbeddingFrequencies {
     return this.embeddings.reduce((acc, embedding) => {
       const embeddingKey = embedding.toString();
       if (!acc[embeddingKey]) {

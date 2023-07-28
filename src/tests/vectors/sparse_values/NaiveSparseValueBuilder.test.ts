@@ -1,11 +1,11 @@
-import { NaiveSparseValueBuilder } from "../../../";
+import { NaiveSparseValuesBuilder } from "../../../";
 import assert from 'assert';
 
-describe('NaiveSparseValueBuilder', () => {
+describe('NaiveSparseValuesBuilder', () => {
   describe('build', () => {
     it('return the frequencies and values of the included embedder', () => {
       const embeddings = [1, 2, 3, 2, 3, 1, 5, 3, 1];
-      const builder = new NaiveSparseValueBuilder(embeddings);
+      const builder = new NaiveSparseValuesBuilder(embeddings);
       const sparseValues = builder.build();
       assert.deepStrictEqual(sparseValues, { indices: [1, 2, 3, 5], values: [3, 2, 3, 1] });
     });
@@ -23,7 +23,7 @@ describe('NaiveSparseValueBuilder', () => {
         5839, 839, 1236, 22437, 5310, 7362,
         546, 18691, 29973
       ]
-      const builder = new NaiveSparseValueBuilder(embeddings);
+      const builder = new NaiveSparseValuesBuilder(embeddings);
       const sparseValues = builder.build();
       assert(sparseValues.indices.length === new Set(sparseValues.indices).size, "Indices are not unique!");
     });

@@ -1,4 +1,4 @@
-interface SparseValues {
+export interface SparseValues {
   /**
    * The indices of the sparse data.
    * @type {Array<number>}
@@ -14,9 +14,9 @@ interface SparseValues {
   values: Array<number>;
 }
 
-interface SparseValueBuilder {
+export interface SparseValuesBuilder {
   embeddings: Array<number>;
   build(): SparseValues;
 }
 
-type EmbeddingFrequencies = Record<string, number>;
+export type EmbeddingFrequencies = Record<string, number>;

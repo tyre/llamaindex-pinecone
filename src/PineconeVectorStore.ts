@@ -1,6 +1,6 @@
-import { NodeWithEmbedding, BaseNode } from "llamaindex";
+import { NodeWithEmbedding } from "llamaindex";
 import { PineconeClient, Vector } from "@pinecone-database/pinecone";
-import { NaiveSparseValueBuilder, utils, PineconeVectorsBuilder } from ".";
+import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder } from ".";
 import { VectorOperationsApi } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { } from "./vectors/PineconeVectorsBuilder";
 
@@ -8,9 +8,9 @@ type PineconeVectorStoreOptions = {
   indexName: string;
   client?: PineconeClient;
   namespace?: string;
-  // class that implements SparseValueBuilder.
+  // class that implements SparseValuesBuilder.
   // Can't to `typeof` with an interface :(
-  sparseVectorBuilder?: { new(embeddings: number[]): SparseValueBuilder };
+  sparseVectorBuilder?: { new(embeddings: number[]): SparseValuesBuilder };
 }
 
 type PineconeIndex = VectorOperationsApi;
@@ -39,7 +39,7 @@ export class PineconeVectorStore {
   indexName: string;
   namespace: string | undefined;
   client: PineconeClient | undefined;
-  sparseVectorBuilder: { new(embeddings: number[]): SparseValueBuilder };
+  sparseVectorBuilder: { new(embeddings: number[]): SparseValuesBuilder };
 
   pineconeIndex: PineconeIndex | undefined;
   pineconeIndexStats: PineconeIndexStats | undefined;
@@ -48,7 +48,7 @@ export class PineconeVectorStore {
     this.client = options.client;
     this.indexName = options.indexName;
     this.namespace = options.namespace;
-    this.sparseVectorBuilder = options.sparseVectorBuilder || NaiveSparseValueBuilder;
+    this.sparseVectorBuilder = options.sparseVectorBuilder || NaiveSparseValuesBuilder;
   }
 
   /**
@@ -141,7 +141,7 @@ export class PineconeVectorStore {
       const upsertResponse = await index.upsert({ upsertRequest: { vectors: builtVectors } });
       upsertedCount = upsertResponse.upsertedCount || 0;
     } catch (e) {
-      throw e;
+      throw `Error with call to Pinecone: ${e}`;
     }
     return upsertedCount;
   }

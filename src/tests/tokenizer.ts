@@ -24,9 +24,11 @@ const defaultTokenizeOptions: Partial<TokenizeOptions> = {
 
 export class Tokenizer {
   modelNameOrPath: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tokenizer: any;
 
   constructor(modelNameOrPath: string, options: TokenizerConfig) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     transformersEnv.allowRemoteModels = options.allowRemoteModels || false;
     transformersEnv.localModelPath = options.localModelPath;
@@ -38,9 +40,10 @@ export class Tokenizer {
     this.tokenizer = await AutoTokenizer.from_pretrained(this.modelNameOrPath);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async tokenize(text: string, tokenizeOptions: TokenizeOptions): Promise<any> {
     const options = { ...defaultTokenizeOptions, ...tokenizeOptions };
-    let tokens = await this.tokenizer(text, { ...options, max_length: options.maxLength });
+    const tokens = await this.tokenizer(text, { ...options, max_length: options.maxLength });
     return tokens;
   }
 }

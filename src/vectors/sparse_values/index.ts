@@ -1,1 +1,2 @@
-export { NaiveSparseValueBuilder } from "./NaiveSparseValueBuilder";
+export { NaiveSparseValuesBuilder } from "./NaiveSparseValuesBuilder";
+export * from "./types";
