@@ -104,12 +104,12 @@ export class PineconeVectorStore {
    * @param {NodeWithEmbedding[]} nodesWithEmbeddings - an array of Nodes with embeddings.
    * @param {PineconeUpsertOptions} upsertOptions - options for the upsert operation, like whether to
    * include sparse values.
-   * @returns the numer of vectors affected (created or updated).
+   * @returns the ids of vectors affected (created or updated).
   */
   async upsert(
     nodesWithEmbeddings: NodeWithEmbedding[],
     upsertOptions: PineconeUpsertOptions = {}
-  ): Promise<number> {
+  ): Promise<Array<string>> {
     const builtVectors: Array<Vector> = [];
 
     // Loop over each of the nodes with embeddings, build vectors. We flatten
@@ -143,7 +143,7 @@ export class PineconeVectorStore {
     } catch (e) {
       throw `Error with call to Pinecone: ${e}`;
     }
-    return upsertedCount;
+    return builtVectors.map((vector) => vector.id);
   }
 
   async fetch(pineconeVectorIds: string[], namespace?: string): Promise<Record<string, Vector>> {

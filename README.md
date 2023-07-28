@@ -47,7 +47,7 @@ const embedding = [
 
 const nodesWithEmbeddings = [{node: aNormalNode, embedding}];
 await vectorStore.upsert(nodesWithEmbeddings);
-// => 1 (the number of vectors upserted)
+// => ["peter-piper"], an array of vector ids upserted.
 ```
 
 #### Sparse values
