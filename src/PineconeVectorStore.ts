@@ -146,4 +146,16 @@ export class PineconeVectorStore {
     return upsertedCount;
   }
 
+  async fetch(pineconeVectorIds: string[], namespace?: string): Promise<Record<string, Vector>> {
+    const index = await this.getIndex();
+    const fetchResponse = await index.fetch({ ids: pineconeVectorIds, namespace });
+    return fetchResponse.vectors || {};
+  }
+
+  // async delete(nodeIds: string[], namespace?: string): Promise<number> {
+  //   const index = await this.getIndex();
+  //   const deleteResponse = await index.delete1({ filter: []});
+  //   return deleteResponse.deletedCount || 0;
+  // }
+
 }
