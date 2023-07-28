@@ -89,7 +89,7 @@ const indexInfo = await myPineconeClient.Index("letters").describeIndexStats();
 console.log(indexInfo.dimension)
 // => 1
 
-const node = TextNode({text: "word", id_:"wordNode", metadata: { fromDocId: 1 }})
+const node = TextNode({text: "word", id_:"wordNode"})
 vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}])
 // => ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
 ```
@@ -99,17 +99,17 @@ The API request to Pinecone would look something like this:
 ```JSON
 {
   "vectors": [
-    { "id": "wordNode-0", "values":[23], "metadata": { "fromDocId": 1 } },
-    { "id": "wordNode-1", "values":[15], "metadata": { "fromDocId": 1 } },
-    { "id": "wordNode-2", "values":[18], "metadata": { "fromDocId": 1 } },
-    { "id": "wordNode-3", "values":[4], "metadata": { "fromDocId": 1 } }
+    { "id": "wordNode-0", "values":[23], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-1", "values":[15], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-2", "values":[18], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-3", "values":[4], "metadata": { "nodeId": "wordNode" } }
   ]
 }
 ```
 
 Notice that the vector has been split to fit the dimension of the index. The ids in Pinecone have been adapted to be indexed in order, prefixed by the node's id, and the metadata is preserved.
 
-The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically.
+The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically. Query's can still filter by that node id in the metadata.
 
 ### Customization
 
