@@ -24,7 +24,18 @@ describe('NaiveSparseValuesBuilder', () => {
       ]
       const builder = new NaiveSparseValuesBuilder(embeddings);
       const sparseValues = builder.build();
+
       expect(sparseValues.indices.length).toEqual(new Set(sparseValues.indices).size);
+      expect(sparseValues.indices).toEqual([
+        1, 263, 278, 310, 319, 384, 546, 839,
+        960, 1236, 5310, 5839, 6804, 7362, 18691, 22437,
+        29879, 29889, 29892, 29915, 29973
+      ])
+      expect(sparseValues.values).toEqual([
+        1, 2, 1, 4, 1, 4, 4, 4,
+        1, 8, 4, 4, 1, 4, 4, 4,
+        1, 2, 1, 1, 1
+      ]);
     });
   })
 })

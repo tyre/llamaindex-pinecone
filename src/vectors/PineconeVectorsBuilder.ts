@@ -3,11 +3,12 @@ import { NaiveSparseValuesBuilder, SparseValues, SparseValuesBuilder } from "./s
 import { Vector } from "@pinecone-database/pinecone";
 
 type PineconeMetadata = Record<string, string | number | boolean | Array<string>>;
+type SparseValuesBuilderClass = { new(embeddings: number[]): SparseValuesBuilder };
 
 type PineconeVectorsBuilderOptions = {
   includeSparseValues?: boolean;
   dimension: number;
-  sparseVectorBuilder?: { new(embeddings: number[]): SparseValuesBuilder };
+  sparseVectorBuilder?: SparseValuesBuilderClass;
 }
 
 export class PineconeVectorsBuilder {
@@ -15,7 +16,7 @@ export class PineconeVectorsBuilder {
   embedding: number[];
   includeSparseValues: boolean;
   dimension: number;
-  sparseVectorBuilder: { new(embeddings: number[]): SparseValuesBuilder };
+  sparseVectorBuilder: SparseValuesBuilderClass = NaiveSparseValuesBuilder;
 
   constructor(node: BaseNode, embedding: number[], options: PineconeVectorsBuilderOptions) {
     this.node = node;
@@ -35,18 +36,31 @@ export class PineconeVectorsBuilder {
   }
 
   public buildVectors(): Array<Vector> {
-    let vectorSubId = 0;
-    const builtVectors: Array<Vector> = [];
-    for (const embeddingChunk of this.embeddingChunks()) {
-      builtVectors.push(this.buildVector(embeddingChunk, vectorSubId++));
-    }
+    let builtVectors: Array<Vector> = [];
+    // If the embedding is less than or equal to the dimension,
+    // build that one and move on. Its id will be the same as the node's nodeId.
+    if (this.embedding.length <= this.dimension) {
+      builtVectors = [this.buildVector(this.embedding)];
 
+      // Otherwise, build multiple vectors, each with a unique id.
+    } else {
+      let vectorSubId = 0;
+      for (const embeddingChunk of this.embeddingChunks()) {
+        builtVectors.push(this.buildVector(embeddingChunk, vectorSubId++));
+      }
+    }
     return this.normalizedVectors(builtVectors);
   }
 
-  private buildVector(embedding: number[], vectorSubId: number = 0): Vector {
+  private buildVector(embedding: number[], vectorSubId?: number): Vector {
+    let vectorId;
+    if (vectorSubId || vectorSubId === 0) {
+      vectorId = `${this.node.nodeId}-${vectorSubId}`;
+    } else {
+      vectorId = this.node.nodeId;
+    }
     const vector: Vector = {
-      id: `${this.node.nodeId}-${vectorSubId}`,
+      id: vectorId,
       values: embedding,
       metadata: this.extractNodeMetadata()
     };
@@ -56,12 +70,13 @@ export class PineconeVectorsBuilder {
     return vector;
   }
 
+  // Initializes a builder and outsources the work to its build method.
   private buildSparseValues(embedding: number[]): SparseValues {
     const builder = new this.sparseVectorBuilder(embedding);
     return builder.build();
   }
 
-  // Generator to loop over embedding
+  // Generator to loop over embedding in chunks of dimension size.
   private *embeddingChunks(): Generator<Array<number>, void> {
     for (let chunkIndex = 0; chunkIndex < this.embedding.length; chunkIndex += this.dimension) {
       yield this.embedding.slice(chunkIndex, chunkIndex + this.dimension);
@@ -79,7 +94,7 @@ export class PineconeVectorsBuilder {
 
   private extractNodeMetadata(): PineconeMetadata {
     return {
-      id: this.node.nodeId,
+      nodeId: this.node.nodeId,
       ...this.node.metadata
     };
   }
