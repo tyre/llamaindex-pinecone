@@ -1,7 +1,3 @@
-import { EmbeddingFrequencies, SparseValues } from "../../";
-import { SparseValueBuilder } from "./types";
-
-
 /**
  * Builds sparse values using a naive approach.
  * 
@@ -43,13 +39,11 @@ export class NaiveSparseValueBuilder implements SparseValueBuilder {
   */
   build(): SparseValues {
     const embeddingFrequencies = this.buildEmbeddingFrequencies();
-    console.log(embeddingFrequencies);
-
     const sparseValues: SparseValues = { indices: [], values: [] };
 
     for (const token in embeddingFrequencies) {
-      sparseValues.indices.push(embeddingFrequencies[token]);
-      sparseValues.values.push(parseFloat(token));
+      sparseValues.indices.push(parseInt(token));
+      sparseValues.values.push(embeddingFrequencies[token]);
     };
     return sparseValues;
   }

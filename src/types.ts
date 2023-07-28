@@ -1,134 +1,22 @@
-export enum WhisperModel {
-  TinyEnglish = "tiny.en",
-  Tiny = "tiny",
-  BaseEnglish = "base.en",
-  Base = "base",
-  SmallEnglish = "small.en",
-  Small = "small",
-  MediumEnglish = "medium.en",
-  Medium = "medium",
-  LargeV1 = "large-v1",
-  LargeV2 = "large-v2",
-  Large = "large",
+interface SparseValues {
+  /**
+   * The indices of the sparse data.
+   * @type {Array<number>}
+   * @memberof SparseValues
+   */
+  indices: Array<number>;
+  /**
+   * The corresponding values of the sparse data
+   * Values array must have the same length as the indices array.
+   * @type {Array<number>}
+   * @memberof SparseValues
+   */
+  values: Array<number>;
 }
 
-export enum WhisperLanguage {
-  Afrikaans = "af",
-  Albanian = "sq",
-  Amharic = "am",
-  Arabic = "ar",
-  Armenian = "hy",
-  Assamese = "as",
-  Azerbaijani = "az",
-  Bashkir = "ba",
-  Basque = "eu",
-  Belarusian = "be",
-  Bengali = "bn",
-  Bosnian = "bs",
-  Breton = "br",
-  Bulgarian = "bg",
-  Catalan = "ca",
-  Chinese = "zh",
-  Croatian = "hr",
-  Czech = "cs",
-  Danish = "da",
-  Dutch = "nl",
-  English = "en",
-  Estonian = "et",
-  Faroese = "fo",
-  Finnish = "fi",
-  French = "fr",
-  Galician = "gl",
-  Georgian = "ka",
-  German = "de",
-  Greek = "el",
-  Gujarati = "gu",
-  HaitianCreole = "ht",
-  Hausa = "ha",
-  Hawaiian = "haw",
-  Hebrew = "he",
-  Hindi = "hi",
-  Hungarian = "hu",
-  Icelandic = "is",
-  Indonesian = "id",
-  Italian = "it",
-  Japanese = "ja",
-  Javanese = "jw",
-  Kannada = "kn",
-  Kazakh = "kk",
-  Khmer = "km",
-  Korean = "ko",
-  Lao = "lo",
-  Latin = "la",
-  Latvian = "lv",
-  Lingala = "ln",
-  Lithuanian = "lt",
-  Luxembourgish = "lb",
-  Macedonian = "mk",
-  Malagasy = "mg",
-  Malay = "ms",
-  Malayalam = "ml",
-  Maltese = "mt",
-  Maori = "mi",
-  Marathi = "mr",
-  Mongolian = "mn",
-  Myanmar = "my",
-  Nepali = "ne",
-  Norwegian = "no",
-  Nynorsk = "nn",
-  Occitan = "oc",
-  Pashto = "ps",
-  Persian = "fa",
-  Polish = "pl",
-  Portuguese = "pt",
-  Punjabi = "pa",
-  Romanian = "ro",
-  Russian = "ru",
-  Sanskrit = "sa",
-  Serbian = "sr",
-  Shona = "sn",
-  Sindhi = "sd",
-  Sinhala = "si",
-  Slovak = "sk",
-  Slovenian = "sl",
-  Somali = "so",
-  Spanish = "es",
-  Sundanese = "su",
-  Swahili = "sw",
-  Swedish = "sv",
-  Tagalog = "tl",
-  Tajik = "tg",
-  Tamil = "ta",
-  Tatar = "tt",
-  Telugu = "te",
-  Thai = "th",
-  Tibetan = "bo",
-  Turkish = "tr",
-  Turkmen = "tk",
-  Ukrainian = "uk",
-  Urdu = "ur",
-  Uzbek = "uz",
-  Vietnamese = "vi",
-  Welsh = "cy",
-  Yiddish = "yi",
-  Yoruba = "yo",
+interface SparseValueBuilder {
+  embeddings: Array<number>;
+  build(): SparseValues;
 }
 
-export enum WhisperOutputFormat {
-  All = "all",
-  Text = "txt",
-  VTT = "vtt",
-  SRT = "srt",
-  TSV = "tsv",
-  JSON = "json",
-}
-
-export enum WhisperTask {
-  Transcribe = "transcribe",
-  Translate = "translate",
-}
-
-export enum WhisperDevice {
-  CUDA = "cuda",
-  CPU = "cpu",
-}
+type EmbeddingFrequencies = Record<string, number>;
