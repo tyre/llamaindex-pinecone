@@ -91,7 +91,7 @@ console.log(indexInfo.dimension)
 
 const node = TextNode({text: "word", id_:"wordNode", metadata: { fromDocId: 1 }})
 vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}])
-// => 4
+// => ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
 ```
 
 The API request to Pinecone would look something like this:
