@@ -1,5 +1,4 @@
 import { NaiveSparseValuesBuilder } from "../../../";
-import assert from 'assert';
 
 describe('NaiveSparseValuesBuilder', () => {
   describe('build', () => {
@@ -7,7 +6,7 @@ describe('NaiveSparseValuesBuilder', () => {
       const embeddings = [1, 2, 3, 2, 3, 1, 5, 3, 1];
       const builder = new NaiveSparseValuesBuilder(embeddings);
       const sparseValues = builder.build();
-      assert.deepStrictEqual(sparseValues, { indices: [1, 2, 3, 5], values: [3, 2, 3, 1] });
+      expect(sparseValues).toStrictEqual({ indices: [1, 2, 3, 5], values: [3, 2, 3, 1] });
     });
 
     it('has unique indicies', () => {
@@ -25,7 +24,7 @@ describe('NaiveSparseValuesBuilder', () => {
       ]
       const builder = new NaiveSparseValuesBuilder(embeddings);
       const sparseValues = builder.build();
-      assert(sparseValues.indices.length === new Set(sparseValues.indices).size, "Indices are not unique!");
+      expect(sparseValues.indices.length).toEqual(new Set(sparseValues.indices).size);
     });
   })
 })

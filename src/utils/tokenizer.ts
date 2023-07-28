@@ -1,5 +1,5 @@
 /*
-* Helper class for tokenizing text in tests.
+* Helper class for tokenizing text.
 * Expects that the model is either already local or present
 * in the HuggingFace cache.
 */

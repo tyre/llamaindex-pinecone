@@ -23,8 +23,8 @@ export function getPineconeConfigFromEnv(): PineconeEnv {
     }
   } catch {
     throw new Error("Missing Pinecone API environment variables. To fix, either:\
-    - PINECONE_API_KEY and PINECONE_API_ENVIRONMENT or .\
-    - Pass an initialized PineconeClient to the constructor via the `pineconeClient` parameter. \
+    - set PINECONE_API_KEY and PINECONE_API_ENVIRONMENT or .\
+    - Pass an initialized PineconeClient to the constructor via the `client` parameter. \
     ");
   }
 }

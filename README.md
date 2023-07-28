@@ -6,6 +6,13 @@ This repository contains a LlamaIndex-compatible vector store backed by [Pinecon
 
 `npm install llamaindex-pinecone`
 
+To automatically have a working client initialized, site these environment variables:
+
+- `PINECONE_API_KEY`: Your API Key 
+- `PINECONE_ENVIRONMENT`: The environment of the pinecone instance you're using
+
+
+
 ## Usage
 
 The heart and soul of this package is `PineconeVectorStore`. Let's see how that works.
@@ -29,7 +36,7 @@ Now let's do some things. Let's add some vectors.
 ```typescript
 import { Document } from "llamaindex";
 
-const aNormalNode = Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?"})
+const aNormalNode = new Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?", id_: "peter-piper"})
 const embedding = [
   1, 5310, 7362, 546, 18691, 263, 1236, 384, 310, 5839, 839, 1236,
   22437, 29889, 319, 1236, 384, 310, 5839, 839, 1236, 22437, 5310, 7362,
@@ -87,7 +94,7 @@ vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}])
 // => 4
 ```
 
-The API request to Pinecone will look something like this:
+The API request to Pinecone would look something like this:
 
 ```JSON
 {
@@ -100,7 +107,9 @@ The API request to Pinecone will look something like this:
 }
 ```
 
-Notice that the vector has been split to fit the dimension of the index. The ids in Pinecone have been adapted to be indexed in order and the metadata is preserved.
+Notice that the vector has been split to fit the dimension of the index. The ids in Pinecone have been adapted to be indexed in order, prefixed by the node's id, and the metadata is preserved.
+
+The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically.
 
 ### Customization
 
@@ -109,6 +118,7 @@ Notice that the vector has been split to fit the dimension of the index. The ids
 #### Customizing the client
 
 By default, these Pinecone variables are pulled from the environment:
+
 - `PINECONE_API_KEY`: Your API Key 
 - `PINECONE_ENVIRONMENT`: The environment of the pinecone instance you're using
 

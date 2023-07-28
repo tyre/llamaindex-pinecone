@@ -83,5 +83,4 @@ export class PineconeVectorsBuilder {
       ...this.node.metadata
     };
   }
-
 }
