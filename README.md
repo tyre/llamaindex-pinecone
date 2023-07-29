@@ -111,6 +111,41 @@ Notice that the vector has been split to fit the dimension of the index. The ids
 
 The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically. Query's can still filter by that node id in the metadata.
 
+### Fetching vectors
+
+Simple stuff. Note: this fetches vectors, not vectors for a node.
+For nodes <= the dimension of the index, that's the same as the `node.nodeId`.
+
+```typescript
+vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to default namespace)")
+```
+
+### Deleting vectors
+
+#### By node id
+
+Deletes all vectors associated with the given node ids.
+
+🚨 NOTE 🚨
+This does not work on Starter plans, which don't support filters on delete operations. Use `deleteVectors` instead.
+
+```typescript
+const nodeIds = ["wordNode", "peter-piper"];
+await client.delete(nodeIds, "Namespace (Optional: defaults to default namespace)");
+```
+
+#### By vector id
+
+```typescript
+const vectorIds = [
+  "wordNode-0",
+  "wordNode-1"
+  "wordNode-2",
+  "wordNode-3"
+];
+await client.deleteVectors(vectorIds, "Namespace (Optional: defaults to default namespace)");
+```
+
 ### Customization
 
 `PineconeVectorStore` works well out of the box. You might want some customization, thought.

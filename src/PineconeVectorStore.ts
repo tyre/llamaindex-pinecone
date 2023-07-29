@@ -1,8 +1,7 @@
 import { NodeWithEmbedding } from "llamaindex";
 import { PineconeClient, Vector } from "@pinecone-database/pinecone";
 import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder } from ".";
-import { VectorOperationsApi } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
-import { } from "./vectors/PineconeVectorsBuilder";
+import { DeleteRequest, VectorOperationsApi } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 
 type PineconeVectorStoreOptions = {
   indexName: string;
@@ -152,10 +151,43 @@ export class PineconeVectorStore {
     return fetchResponse.vectors || {};
   }
 
-  // async delete(nodeIds: string[], namespace?: string): Promise<number> {
-  //   const index = await this.getIndex();
-  //   const deleteResponse = await index.delete1({ filter: []});
-  //   return deleteResponse.deletedCount || 0;
-  // }
+  /**
+   * Delete vectors from the index by vector id.
+   * @param {string[]} pineconeVectorIds - an array of vector ids to delete.
+   * @param {string} namespace - the namespace to delete from. If not provided, will delete from the default namespace.
+   * @returns {Promise<object>} the response from the delete call. No documentation exists for this response, but it's likely empty.
+   */
+  async deleteVectors(pineconeVectorIds: string[], namespace?: string): Promise<object> {
+    const index = await this.getIndex();
+    const requestParams: Partial<DeleteRequest> = { ids: pineconeVectorIds };
+    if (namespace) {
+      requestParams.namespace = namespace;
+    }
+
+    const deleteResponse = await index._delete({
+      deleteRequest: requestParams
+    });
+    return deleteResponse
+  }
+
+  /**
+   * Delete vectors from the index by nodeId.
+   * @param {string[]} nodeIds - an array of nodeIds to delete.
+   * @param {string} namespace - the namespace to delete from. If not provided, will delete from the default namespace.
+   * **NOTE**
+   * This does not work on Starter plans, as they do not allow filters in deletion.
+   */
+  async delete(nodeIds: string[], namespace?: string): Promise<object> {
+    const index = await this.getIndex();
+    const requestParams: Partial<DeleteRequest> = { filter: { "nodeId": { "$in": nodeIds } } };
+    if (namespace) {
+      requestParams.namespace = namespace;
+    }
+    const deleteResponse = await index._delete({
+      deleteRequest: requestParams
+    });
+
+    return deleteResponse;
+  }
 
 }
