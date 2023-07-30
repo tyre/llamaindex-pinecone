@@ -49,7 +49,6 @@ export class PineconeVectorsUpsert {
     }
 
     const vectorIds = builtVectors.map((vector) => vector.id);
-    console.log({ upsertedCount });
     const upsertResults = {
       upsertedCount,
       failedCount: 0,
