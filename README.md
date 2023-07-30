@@ -11,8 +11,6 @@ To automatically have a working client initialized, site these environment varia
 - `PINECONE_API_KEY`: Your API Key 
 - `PINECONE_ENVIRONMENT`: The environment of the pinecone instance you're using
 
-
-
 ## Usage
 
 The heart and soul of this package is `PineconeVectorStore`. Let's see how that works.
@@ -47,8 +45,33 @@ const embedding = [
 
 const nodesWithEmbeddings = [{node: aNormalNode, embedding}];
 await vectorStore.upsert(nodesWithEmbeddings);
-// => ["peter-piper"], an array of vector ids upserted.
+/**
+ * => {
+ *   upsertedCount: 4,
+ *   upsertedVectorIds: ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
+ *   failed: 0,
+ *   failedVectorIds: []
+ *  }
+*/
 ```
+
+The response object from `upsert` contains counts and vector ids for both successful and failed upsertions.
+
+If the response for upsert (either all vectors or for a batch) indicates that fewer vectors were affected than were in the batch, that batch is considered failed. Pinecone's API does not return which ids failed, only a total count fo successes. Since we are upserting, it's safe to retry all nodes/embeddings from that entire batch.
+
+##### Passing duplicate vectors
+
+Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. `upsertedVectorIds` will therefore include the id twice.
+
+#### Batching
+
+The call to `upsert` takes a set of options as its second argument. Calls to the Pinecone API are batched, in groups of 100 by default. Passing a `batchSize` changes this value:
+
+```typescript
+await vectorStore.upsert(nodesWithEmbeddings, { batchSize:  500 })
+```
+
+Changing the batch size possibly affects how many requests are made to Pinecone's API. You may want to fiddle with this if you are hitting rate limits. Note that Pinecone recommends batch sizes less than 1000.
 
 #### Sparse values
 
@@ -91,7 +114,12 @@ console.log(indexInfo.dimension)
 
 const node = TextNode({text: "word", id_:"wordNode"})
 vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}])
-// => ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
+// => {
+//  upsertedCount: 4,
+//  upsertedVectorIds: ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
+//  failed: 0,
+//  failedVectorIds: []
+// }
 ```
 
 The API request to Pinecone would look something like this:
@@ -156,6 +184,8 @@ By default, these Pinecone variables are pulled from the environment:
 
 - `PINECONE_API_KEY`: Your API Key 
 - `PINECONE_ENVIRONMENT`: The environment of the pinecone instance you're using
+
+If you'd like to bring your own client, the `client` option will gladly accept yours.
 
 ```typescript
 import { PineconeClient } from "@pinecone-database/pinecone";

@@ -1,22 +1,6 @@
 import { QueryRequest } from "@pinecone-database/pinecone";
 import { SparseValues } from "vectors";
-
-export enum PineconeMetadataFilterKey {
-  EqualTo = "$eq", // - Equal to (number, string, boolean)
-  NotEqualTo = "$ne", // - Not equal to (number, string, boolean)
-  GreaterThan = "$gt", // - Greater than (number)
-  GreaterThanOrEqualTo = "$gte", // - Greater than or equal to (number)
-  LessThan = "$lt", // - Less than (number)
-  LessThanOrEqualTo = "$lte", // - Less than or equal to (number)
-  In = "$in", // - In array (string or number)
-  NotIn = "$nin" // - Not in array (string or number)
-}
-
-export type PineconeMetadataFilterValue = string | number | boolean | Array<string | number>;
-
-export type PineconeMetadataFilter = {
-  [key in PineconeMetadataFilterKey]: PineconeMetadataFilterValue;
-}
+import { PineconeMetadataFilter } from "pinecone_api/types";
 
 export type PineconeQueryOptions = {
   namespace?: string;
@@ -29,18 +13,14 @@ export type PineconeQueryOptions = {
   id?: string;
 }
 
-export type PineconeQueryMatch = {
-  id: string;
-  score: number;
-  values?: number[];
-  sparseValues?: SparseValues;
-  metadata?: Record<string, string | number | boolean>;
-}
-
-export type PineconeQueryResponse = {
-  matches: Array<PineconeQueryMatch>;
-  namespace: string;
-}
+// Because we're storing properties directly on the PineconeQueryBuilder,
+// we build a type that is the intersection of on the builder and the
+// query request. When building the final representation,
+// we can ensure that the only builder properties allowed to be added are those
+// which also exist on a pinecone QueryRequest
+type OptionalRequestProperty = Array<
+  keyof PineconeQueryBuilder & keyof QueryRequest
+>;
 
 export class PineconeQueryBuilder {
   namespace?: string;
@@ -51,32 +31,45 @@ export class PineconeQueryBuilder {
   sparseVector?: SparseValues;
   filter?: PineconeMetadataFilter;
   id?: string;
-  
+
+  private OPTIONAL_QUERY_REQUEST_PROPERTIES: OptionalRequestProperty =
+    ["namespace", "vector", "filter", "id"];
+
   constructor(options: PineconeQueryOptions) {
-    if (!options.id || !options.vector) {
-      throw new Error('One of id and vector are required.');
+    if (!options.id && !options.vector) {
+      throw new Error('One of `id` or `vector` are required.');
     } else if (options.id && options.vector) {
-      throw new Error('Only one of id and vector are allowed.');
+      throw new Error('Only one of `id` and `vector` are allowed.');
     }
     this.topK = options.topK;
     Object.assign(this, options);
   }
 
   toQueryRequest(): QueryRequest {
-    const queryRequest: Partial<QueryRequest> = {
+    let newQueryRequest: Partial<QueryRequest> = {
       topK: this.topK,
       includeValues: this.includeValues,
       includeMetadata: this.includeMetadata,
     }
+    newQueryRequest = this.addOptionalQueryRequestValues(newQueryRequest);
+    return newQueryRequest as QueryRequest;
+  }
 
-    // only add in keys that have values
-    const maybePresentKeys: Array<keyof QueryRequest> = ["namespace", "vector", "filter", "id"];
-    for (const key of maybePresentKeys) {
+  addOptionalQueryRequestValues(queryRequest: Partial<QueryRequest>): Partial<QueryRequest> {
+    // only add in keys that have values, and only allow keys that
+    // are both properties of this object and on the pinecone QueryRequest
+    return this.OPTIONAL_QUERY_REQUEST_PROPERTIES.reduce((_prev, key): Partial<QueryRequest> => {
       if (this[key]) {
-        const propertyKey = key as keyof PineconeQueryBuilder;
-        queryRequest[key] = this[propertyKey];
+        const requestPropertyKey = key as keyof QueryRequest;
+
+        // Typescript sees queryRequest as 'undefined',
+        // which it cannot ever be.
+        // We respectfully ignore its foolishness.
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        queryRequest[requestPropertyKey] = this[key];
       }
-    }
-    return queryRequest as QueryRequest;
+      return queryRequest;
+    }, queryRequest)
   }
 }

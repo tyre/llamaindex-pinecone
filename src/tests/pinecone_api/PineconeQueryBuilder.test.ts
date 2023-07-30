@@ -1,4 +1,4 @@
-import { PineconeQueryBuilder } from "pinecone_api/PineconeQueryBuilder";
+import { PineconeQueryBuilder } from "../../pinecone_api/PineconeQueryBuilder";
 
 describe('PineconeQueryBuilder', (): void => {
   it('should throw an error if neither id or vector are provided', (): void => {
