@@ -110,7 +110,9 @@ export class PineconeVectorStore {
     upsertOptions: PineconeUpsertOptions = {}
   ): Promise<Array<string>> {
     const builtVectors: Array<Vector> = [];
-
+    // Fetch stats about the index so we know its dimension.
+    const indexStats = await this.getIndexStats();
+    
     // Loop over each of the nodes with embeddings, build vectors. We flatten
     // all vectors into a single list for upsertion.
     for (const nodeWithEmbedding of nodesWithEmbeddings) {
@@ -119,9 +121,6 @@ export class PineconeVectorStore {
       if (!embedding) {
         throw new Error(`Node ${node.nodeId} does not have an embedding.`);
       }
-
-      // Fetch stats about the index so we know its dimension.
-      const indexStats = await this.getIndexStats();
 
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(
