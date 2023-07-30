@@ -41,3 +41,8 @@ export type PineconeUpsertResults = {
   upsertedVectorIds: string[];
   failedVectorIds: string[];
 }
+
+export type PineconeEnv = {
+  apiKey: string;
+  environment: string;
+}

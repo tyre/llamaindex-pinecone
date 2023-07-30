@@ -1,4 +1,4 @@
-import { NaiveSparseValuesBuilder } from "../../../vectors/sparse_values";
+import { NaiveSparseValuesBuilder } from "../../../src/vectors/sparse_values";
 
 describe('NaiveSparseValuesBuilder', () => {
   describe('build', () => {

@@ -1,8 +1,4 @@
-export type PineconeEnv = {
-  apiKey: string;
-  environment: string;
-}
-
+import { PineconeEnv } from "pinecone_api/types";
 /*
   * This function is used to get the Pinecone environment variables from the
   * environment. It is used by the PineconeVectorStore constructor to initialize

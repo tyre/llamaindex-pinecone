@@ -1,4 +1,4 @@
-import { NaiveSparseValuesBuilder, PineconeVectorsBuilder } from "../../";
+import { NaiveSparseValuesBuilder, PineconeVectorsBuilder } from "../../src";
 import { Document } from "llamaindex";
 
 describe('PineconeVectorsBuilder', (): void => {

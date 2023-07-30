@@ -1,5 +1,4 @@
 export * from "./vectors";
-export * as utils from "./utils";
 export * from "./PineconeVectorStore";
 export * from "./pinecone_api";
 
