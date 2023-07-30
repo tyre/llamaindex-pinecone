@@ -1,5 +1,5 @@
 node_modules
 dist/
-src/tests/tmp/*
+tests/tmp/*
 tmp/
 .env
