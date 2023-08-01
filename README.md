@@ -109,7 +109,7 @@ This will result in a sparse values dictionary included in vector upsert that lo
 
 `PineconeVectorStore` implements `query` for the sake of complying with the `VectorStore`. Because a full implementation would require re-building all nodes from the returned results, which is not implemented, `query` presently throws an error every time.
 
-Use `queryAll` instead
+Use `queryAll` instead.
 
 #### `queryAll`
 
@@ -162,16 +162,18 @@ The second argument to `queryAll` is a dictionary of options. Those may include:
 
 As we've seen, the response is an object with a key `matches` and an array of scored vectors. Each object contains:
 
-- id: id of the vector
-- score: the similarity to the query vector
-- values: the vector, if `includeValues` was `true`
-- sparseValues: the sparse values of the vector
-- metadata: the metadata of the vector, if `includeMetadata` was `true`
+- `id`: id of the vector
+- `score`: the similarity to the query vector
+- `values`: the vector, if `includeValues` was `true`
+- `sparseValues`: the sparse values of the vector
+- `metadata`: the metadata of the vector, if `includeMetadata` was `true`
 
 ### Fetching vectors
 
-Simple stuff. Note: this fetches vectors, not vectors for a node.
-For nodes <= the dimension of the index, that's the same as the `node.nodeId`.
+Simple stuff.
+
+Note: this fetches vectors, not vectors for a node.
+For nodes with an embedding <= the dimension of the index, that's the same as the `node.nodeId`.
 
 ```typescript
 vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to default namespace)")

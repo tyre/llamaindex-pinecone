@@ -1,13 +1,7 @@
+import { ExactMatchFilter } from "llamaindex";
 import { QueryRequest } from "@pinecone-database/pinecone";
 import { SparseValues } from "vectors";
-import { PineconeMetadataFilters, PineconeMetadataFilter, PineconeMetadataFilterKey } from "pinecone_api/types";
-import { NaiveSparseValuesBuilder, SparseValuesBuilder, SparseValuesBuilderClass } from "vectors";
-
-export interface ExactMatchFilter {
-  filterType: "ExactMatch";
-  key: string;
-  value: string | number;
-}
+import { PineconeMetadataFilters, PineconeMetadataFilter, PineconeMetadataFilterKey } from "./types";
 
 
 export interface MetadataFilters {
@@ -159,15 +153,15 @@ export class PineconeQueryBuilder {
 
       // Loop over each filter and convert them to Pinecone filters
       for (const filter of metadataFilters.filters) {
-        switch (filter.filterType) {
-          case "ExactMatch":
-            pineconeFilter[filter.key] = {
-              [PineconeMetadataFilterKey.EqualTo]: filter.value
-            };
-            break;
-          default:
-            throw new Error(`Filter type ${filter} is not supported.`);
-        }
+        // switch (filter.filterType) {
+        //   case "ExactMatch":
+        pineconeFilter[filter.key] = {
+          [PineconeMetadataFilterKey.EqualTo]: filter.value
+        };
+        //     break;
+        //   default:
+        //     throw new Error(`Filter type ${filter} is not supported.`);
+        // }
       }
     }
     return pineconeFilter

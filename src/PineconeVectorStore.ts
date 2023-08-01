@@ -1,56 +1,15 @@
-import { NodeWithEmbedding, BaseNode, GenericFileSystem } from "llamaindex";
+import {
+  NodeWithEmbedding, BaseNode, GenericFileSystem,
+  VectorStoreQueryResult,
+  VectorStoreQueryMode,
+  MetadataFilters,
+  VectorStoreQuery,
+  VectorStore
+} from "llamaindex";
 import { PineconeClient, Vector as PineconeVector, ScoredVector as PineconeScoredVector } from "@pinecone-database/pinecone";
 import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder } from ".";
 import { DeleteRequest, VectorOperationsApi as PineconeIndex } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { PineconeQueryBuilder, PineconeUpsertOptions, PineconeUpsertResults, PineconeVectorsUpsert, PineconeQueryBuilderOptions, PineconeUpsertVectorsRecord } from "./pinecone_api";
-
-export interface VectorStoreQueryResult {
-  nodes?: BaseNode[];
-  similarities: number[];
-  ids: string[];
-}
-
-export interface ExactMatchFilter {
-  key: string;
-  value: string | number;
-}
-
-export enum VectorStoreQueryMode {
-  DEFAULT = "default",
-  SPARSE = "sparse",
-  HYBRID = "hybrid",
-  // fit learners
-  SVM = "svm",
-  LOGISTIC_REGRESSION = "logistic_regression",
-  LINEAR_REGRESSION = "linear_regression",
-  // maximum marginal relevance
-  MMR = "mmr",
-}
-
-export interface MetadataFilters {
-  filters: ExactMatchFilter[];
-}
-
-export interface VectorStoreQuery {
-  queryEmbedding?: number[];
-  similarityTopK: number;
-  docIds?: string[];
-  queryStr?: string;
-  mode: VectorStoreQueryMode;
-  alpha?: number;
-  filters?: MetadataFilters;
-  mmrThreshold?: number;
-}
-
-export interface VectorStore {
-  storesText: boolean;
-  isEmbeddingQuery?: boolean;
-  client(): any;
-  add(embeddingResults: NodeWithEmbedding[]): Promise<string[]>;
-  delete(refDocId: string, deleteKwargs?: any): Promise<void>;
-  query(query: VectorStoreQuery, kwargs?: any): Promise<VectorStoreQueryResult>;
-  persist(persistPath: string, fs?: GenericFileSystem): Promise<void>;
-}
 
 type PineconeVectorStoreOptions = {
   indexName: string;

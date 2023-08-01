@@ -1,12 +1,12 @@
 {
   "name": "llamaindex-pinecone",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Pinecone integration for llamaindex",
   "dependencies": {
     "@pinecone-database/pinecone": "0.1.6",
     "@types/node": "20.4.5",
     "dotenv": "8.2.0",
-    "llamaindex": "~0.0.11",
+    "llamaindex": "file:../../LlamaIndexTS/packages/core/",
     "typescript": "^5.1.6"
   },
   "devDependencies": {
