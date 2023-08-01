@@ -180,9 +180,9 @@ export class PineconeVectorStore implements VectorStore {
    *  - namespace: the namespace to query. If not provided, will query the default namespace.
    *  - includeMetadata: whether or not to include metadata in the response. Defaults to true.
    *  - includeValues: whether or not to include matching vector values in the response. Defaults to true.
-   *  - sparseVectorBuilder: a class that implements SparseValuesBuilder.
-   *      Only applicable for sparse or hybrid queries.
-   *      Defaults to NaiveSparseValuesBuilder, which does basic frequencies.
+   *  - vectorId: the id of a vector already in Pinecone that will be used as the query.
+   *    Exclusive with `query.queryEmbedding`.
+  
    * @returns {Promise<Array<PineconeScoredVector>>} - an array of scored vectors of length <= topK.
    *   Each object contains:
    *    - id: id of the vector
@@ -200,6 +200,7 @@ export class PineconeVectorStore implements VectorStore {
       // @ts-ignore
       filters: query.filters,
       namespace: kwargs?.namespace,
+      id: kwargs?.vectorId,
     }
 
     if (passedArguments.includes("includeMetadata"))
@@ -208,8 +209,8 @@ export class PineconeVectorStore implements VectorStore {
       queryBuilderOptions.includeValues = kwargs.includeValues;
 
     if (query.mode === VectorStoreQueryMode.SPARSE || query.mode === VectorStoreQueryMode.HYBRID) {
-      const vectorBuilderClass = kwargs.sparseVectorBuilder || NaiveSparseValuesBuilder;
-      const vectorBuilder: SparseValuesBuilder = new vectorBuilderClass(query.queryEmbedding);
+      const vectorBuilderClass = this.sparseVectorBuilder;
+      const vectorBuilder: SparseValuesBuilder = new vectorBuilderClass(query.queryEmbedding!);
       queryBuilderOptions.sparseVector = vectorBuilder.build();
     }
 
@@ -276,7 +277,8 @@ export class PineconeVectorStore implements VectorStore {
           includeSparseValues: upsertOptions.includeSparseValues,
           dimension: indexStats.dimension,
           splitEmbeddingsByDimension: upsertOptions.splitEmbeddingsByDimension,
-          sparseVectorBuilder: this.sparseVectorBuilder        }
+          sparseVectorBuilder: this.sparseVectorBuilder
+        }
       );
       const vectors = vectorsBuilder.buildVectors()
       builtVectorsByNode.totalVectorCount += vectors.length;

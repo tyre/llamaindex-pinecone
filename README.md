@@ -102,6 +102,72 @@ This will result in a sparse values dictionary included in vector upsert that lo
 }
 ```
 
+
+### Querying
+
+#### `query`
+
+`PineconeVectorStore` implements `query` for the sake of complying with the `VectorStore`. Because a full implementation would require re-building all nodes from the returned results, which is not implemented, `query` presently throws an error every time.
+
+Use `queryAll` instead
+
+#### `queryAll`
+
+This method is mostly analagous with `VectorStore.query` except that it returns Pinecone's matches rather than nodes.
+
+```typescript
+import { VectorStoreQuery, VectorStoreQueryMode } from 'llamaindex';
+
+class PineconeVectorStoreQuery implements VectorStoreQuery {
+  queryEmbedding?: number[];
+  similarityTopK: number;
+  docIds?: string[];
+  queryStr?: string;
+  mode: VectorStoreQueryMode;
+  alpha?: number;
+  filters?: MetadataFilters;
+  mmrThreshold?: number;
+
+  constructor(args: any) {
+    Object.assign(this, args);
+  }
+}
+
+const query = new PineconeVectorStoreQuery({
+  similarityTopK: 3,
+  queryEmbedding: [1,2,3,4,5],
+  mode: VectorStoreQueryMode.SPARSE
+});
+
+await vectorStore.queryAll(query);
+/** =>
+ * {
+ *   matches: [
+ *     { id: "vector-1", score: 0.123 },
+ *     { id: "vector-2", score: 0.32 },
+*      { id: "vector-3", score: 0.119 }
+ *   ]
+ * }
+```
+#### Options
+
+The second argument to `queryAll` is a dictionary of options. Those may include:
+
+- `namespace`: the namespace to query. If not provided, will query the default namespace.
+- `includeMetadata`: whether or not to include metadata in the response. Defaults to true.
+- `includeValues`: whether or not to include matching vector values in the response. Defaults to true.
+- `vectorId`: the id of a vector already in Pinecone that will be used as the query. Exclusive with `query.queryEmbedding`.
+
+#### Return value
+
+As we've seen, the response is an object with a key `matches` and an array of scored vectors. Each object contains:
+
+- id: id of the vector
+- score: the similarity to the query vector
+- values: the vector, if `includeValues` was `true`
+- sparseValues: the sparse values of the vector
+- metadata: the metadata of the vector, if `includeMetadata` was `true`
+
 ### Fetching vectors
 
 Simple stuff. Note: this fetches vectors, not vectors for a node.
