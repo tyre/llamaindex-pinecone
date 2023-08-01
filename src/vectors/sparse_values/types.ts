@@ -20,3 +20,5 @@ export interface SparseValuesBuilder {
 }
 
 export type EmbeddingFrequencies = Record<string, number>;
+
+export type SparseValuesBuilderClass = { new(embeddings: number[]): SparseValuesBuilder };

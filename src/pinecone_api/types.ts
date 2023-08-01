@@ -1,4 +1,5 @@
 import { SparseValues } from "index";
+import { Vector as PineconeVector } from "@pinecone-database/pinecone";
 
 export enum PineconeMetadataFilterKey {
   EqualTo = "$eq", // - Equal to (number, string, boolean)
@@ -11,11 +12,27 @@ export enum PineconeMetadataFilterKey {
   NotIn = "$nin" // - Not in array (string or number)
 }
 
-export type PineconeMetadataFilterValue = string | number | boolean | Array<string | number | PineconeMetadataFilter>;
+type PineconeMetadataFilterEqualTo = Record<PineconeMetadataFilterKey.EqualTo, number | string | boolean>;
+type PineconeMetadataFilterNotEqualTo = Record<PineconeMetadataFilterKey.NotEqualTo, number | string | boolean>;
+type PineconeMetadataFilterGreaterThan = Record<PineconeMetadataFilterKey.GreaterThan, number>;
+type PineconeMetadataFilterGreaterThanOrEqualTo = Record<PineconeMetadataFilterKey.GreaterThanOrEqualTo, number>;
+type PineconeMetadataFilterLessThan = Record<PineconeMetadataFilterKey.LessThan, number>;
+type PineconeMetadataFilterLessThanOrEqualTo = Record<PineconeMetadataFilterKey.LessThanOrEqualTo, number>;
+type PineconeMetadataFilterIn = Record<PineconeMetadataFilterKey.In, Array<string | number>>;
+type PineconeMetadataFilterNotIn = Record<PineconeMetadataFilterKey.NotIn, Array<string | number>>;
 
-export type PineconeMetadataFilter = {
-  [key in PineconeMetadataFilterKey]: PineconeMetadataFilterValue;
-}
+export type PineconeMetadataFilter = PineconeMetadataFilterEqualTo |
+  PineconeMetadataFilterNotEqualTo |
+  PineconeMetadataFilterGreaterThan |
+  PineconeMetadataFilterGreaterThanOrEqualTo |
+  PineconeMetadataFilterLessThan |
+  PineconeMetadataFilterLessThanOrEqualTo |
+  PineconeMetadataFilterIn |
+  PineconeMetadataFilterNotIn;
+
+// Filters are of the form {"metadataPropertyKey": {"metadataFilterType": "value"}} where the value
+// is either a scalar or an array of scalars.
+export type PineconeMetadataFilters = Record<string, PineconeMetadataFilter>;
 
 export type PineconeQueryMatch = {
   id: string;
@@ -33,16 +50,31 @@ export type PineconeQueryResponse = {
 export type PineconeUpsertOptions = {
   batchSize?: number;
   includeSparseValues?: boolean;
+  splitEmbeddingsByDimension?: boolean;
 }
 
 export type PineconeUpsertResults = {
-  upsertedCount: number;
-  failedCount: number;
-  upsertedVectorIds: string[];
-  failedVectorIds: string[];
+  upsertedNodeCount: number;
+  upsertedNodeIds: string[];
+  upsertedVectorByNode: Record<string, PineconeVector[]>;
+  upsertedVectorCount: number;
+  failedNodeCount: number;
+  failedNodeIds: string[];
+  errors: string[];
 }
 
 export type PineconeEnv = {
   apiKey: string;
   environment: string;
 }
+
+export type NodePineconeVectorMap = {
+  [nodeId: string]: Array<PineconeVector>;
+}
+
+export type PineconeUpsertVectorsRecord = {
+  totalVectorCount: number;
+  vectorsByNode: NodePineconeVectorMap;
+}
+
+

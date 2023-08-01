@@ -1,29 +1,45 @@
 import { BaseNode } from "llamaindex";
-import { NaiveSparseValuesBuilder, SparseValues, SparseValuesBuilder } from "./sparse_values";
+import { NaiveSparseValuesBuilder, SparseValues, SparseValuesBuilderClass } from "./sparse_values";
 import { Vector } from "@pinecone-database/pinecone";
 
 type PineconeMetadata = Record<string, string | number | boolean | Array<string>>;
-type SparseValuesBuilderClass = { new(embeddings: number[]): SparseValuesBuilder };
 
 type PineconeVectorsBuilderOptions = {
+  alpha?: number;
   includeSparseValues?: boolean;
   dimension: number;
+  splitEmbeddingsByDimension?: boolean;
   sparseVectorBuilder?: SparseValuesBuilderClass;
+  extractPineconeMetadata?: (node: BaseNode) => PineconeMetadata;
 }
 
 export class PineconeVectorsBuilder {
   node: BaseNode;
   embedding: number[];
-  includeSparseValues: boolean;
+  alpha: number = 0;
+  includeSparseValues: boolean = false;
+  splitEmbeddingsByDimension: boolean = true;
   dimension: number;
   sparseVectorBuilder: SparseValuesBuilderClass = NaiveSparseValuesBuilder;
+  extractPineconeMetadata: (node: BaseNode) => PineconeMetadata = extractPineconeMetadata;
 
   constructor(node: BaseNode, embedding: number[], options: PineconeVectorsBuilderOptions) {
     this.node = node;
     this.embedding = this.normalizeEmbedding(embedding);
-    this.includeSparseValues = options.includeSparseValues || false;
+    const passedOptions = Object.keys(options);
+
+    if (passedOptions.includes("alpha")) this.alpha = options.alpha!;
+    if (passedOptions.includes("includeSparseValues")) {
+      this.includeSparseValues = options.includeSparseValues!;
+    }
+    if (passedOptions.includes("splitEmbeddingsByDimension")) {
+      this.splitEmbeddingsByDimension = options.splitEmbeddingsByDimension!;
+    }
     this.dimension = options.dimension;
-    this.sparseVectorBuilder = options.sparseVectorBuilder || NaiveSparseValuesBuilder;
+    if (passedOptions.includes("sparseVectorBuilder")) {
+      this.sparseVectorBuilder = options.sparseVectorBuilder!;
+    }
+    if (options.extractPineconeMetadata) this.extractPineconeMetadata = options.extractPineconeMetadata;
   }
 
   // Some tokenizers return BigInts, which Pinecone doesn't like.
@@ -37,6 +53,10 @@ export class PineconeVectorsBuilder {
 
   public buildVectors(): Array<Vector> {
     let builtVectors: Array<Vector> = [];
+
+    if (!this.splitEmbeddingsByDimension && this.embedding.length !== this.dimension) {
+      throw new Error(`Node ${this.node.nodeId} has an embedding of length ${this.embedding.length}, but the index has a dimension of ${this.dimension}.`);
+    }
     // If the embedding is less than or equal to the dimension,
     // build that one and move on. Its id will be the same as the node's nodeId.
     if (this.embedding.length <= this.dimension) {
@@ -62,7 +82,7 @@ export class PineconeVectorsBuilder {
     const vector: Vector = {
       id: vectorId,
       values: embedding,
-      metadata: this.extractNodeMetadata()
+      metadata: this.extractPineconeMetadata(this.node)
     };
     if (this.includeSparseValues) {
       vector.sparseValues = this.buildSparseValues(embedding);
@@ -84,6 +104,8 @@ export class PineconeVectorsBuilder {
   }
 
   // Pinecone requires that all vectors have the same dimension.
+  // Because we split vectors by dimension length, only the final
+  // sub-vector should be (possibly) too short.
   private normalizedVectors(vectors: Array<Vector>): Array<Vector> {
     const lastVector = vectors[vectors.length - 1];
     if (lastVector.values.length < this.dimension) {
@@ -92,10 +114,11 @@ export class PineconeVectorsBuilder {
     return vectors;
   }
 
-  private extractNodeMetadata(): PineconeMetadata {
-    return {
-      nodeId: this.node.nodeId,
-      ...this.node.metadata
-    };
-  }
+}
+
+function extractPineconeMetadata(node: BaseNode): PineconeMetadata {
+  return {
+    nodeId: node.nodeId,
+    ...node.metadata
+  };
 }
