@@ -11,9 +11,26 @@ To automatically have a working client initialized, site these environment varia
 - `PINECONE_API_KEY`: Your API Key 
 - `PINECONE_ENVIRONMENT`: The environment of the pinecone instance you're using
 
+
 ## Usage
 
 The heart and soul of this package is `PineconeVectorStore`. Let's see how that works.
+
+### `VectorStore` interface compliance
+
+`PineconeVectorStore` adheres to the `VectorStore` interface from `llamaindex` almost entirely. Here is the `VectorStore` interface:
+
+```typescript
+export interface VectorStore {
+  storesText: boolean;
+  isEmbeddingQuery?: boolean;
+  client(): any;
+  add(embeddingResults: NodeWithEmbedding[]): Promise<string[]>;
+  delete(refDocId: string, deleteKwargs?: any): Promise<void>;
+  query(query: VectorStoreQuery, kwargs?: any): Promise<VectorStoreQueryResult>;
+  persist(persistPath: string, fs?: GenericFileSystem): Promise<void>;
+}
+```
 
 ### Creating a store
 
@@ -22,19 +39,16 @@ import { PineconeVectorStore } from "llamaindex-pinecone";
 
 // Initialize with the name of an index in Pinecone 
 const vectorStore = new PineconeVectorStore({indexName: "speeches"});
-
-// The pinecone client has to initialize asynchrously, so we need an extra
-// call.
-await vectorStore.init();
 ```
-### Upserting vectors
 
-Now let's do some things. Let's add some vectors.
+### Adding a node to the store
+
+Now we want to add a node to the store. This requires us to pass a node and its embedding. The below example has already been tokenized:
 
 ```typescript
 import { Document } from "llamaindex";
 
-const aNormalNode = new Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?", id_: "peter-piper"})
+const tongueTwister = new Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?", id_: "peter-piper"})
 const embedding = [
   1, 5310, 7362, 546, 18691, 263, 1236, 384, 310, 5839, 839, 1236,
   22437, 29889, 319, 1236, 384, 310, 5839, 839, 1236, 22437, 5310, 7362,
@@ -42,33 +56,22 @@ const embedding = [
   5839, 839, 1236, 22437, 29892, 6804, 29915, 29879, 278, 1236, 384, 310,
   5839, 839, 1236, 22437, 5310, 7362, 546, 18691, 29973
 ];
-
-const nodesWithEmbeddings = [{node: aNormalNode, embedding}];
-await vectorStore.upsert(nodesWithEmbeddings);
-/**
- * => {
- *   upsertedCount: 4,
- *   upsertedVectorIds: ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
- *   failed: 0,
- *   failedVectorIds: []
- *  }
-*/
+await vectorStore.add({ node: tongueTwister, emedding })
+// => ["peter-piper]
 ```
 
-The response object from `upsert` contains counts and vector ids for both successful and failed upsertions.
-
-If the response for upsert (either all vectors or for a batch) indicates that fewer vectors were affected than were in the batch, that batch is considered failed. Pinecone's API does not return which ids failed, only a total count fo successes. Since we are upserting, it's safe to retry all nodes/embeddings from that entire batch.
+We see that it has returned an array of node ids that were successfully upserted to Pinecone.
 
 ##### Passing duplicate vectors
 
-Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. `upsertedVectorIds` will therefore include the id twice.
+Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. The returned array will return the nodeId twice.
 
 #### Batching
 
-The call to `upsert` takes a set of options as its second argument. Calls to the Pinecone API are batched, in groups of 100 by default. Passing a `batchSize` changes this value:
+The call to `add` takes a set of options as its second argument. Calls to the Pinecone API are batched, in groups of 100 by default. Passing a `batchSize` changes this value:
 
 ```typescript
-await vectorStore.upsert(nodesWithEmbeddings, { batchSize:  500 })
+await vectorStore.add(nodesWithEmbeddings, { batchSize:  500 })
 ```
 
 Changing the batch size possibly affects how many requests are made to Pinecone's API. You may want to fiddle with this if you are hitting rate limits. Note that Pinecone recommends batch sizes less than 1000.
@@ -99,46 +102,6 @@ This will result in a sparse values dictionary included in vector upsert that lo
 }
 ```
 
-#### How many vectors are created?
-
-That depends on the dimensiality of your index.
-
-If the embeddings passed into `upsert` are equal to the dimension of the index, there's nothing more to be done. You will have one vector.
-
-If the embedding passed in is longer than the index, it will be split into multiple vectors. Here's a contrived example with a pinecone index whose dimension is `1`:
-
-```typescript
-const indexInfo = await myPineconeClient.Index("letters").describeIndexStats();
-console.log(indexInfo.dimension)
-// => 1
-
-const node = TextNode({text: "word", id_:"wordNode"})
-vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}])
-// => {
-//  upsertedCount: 4,
-//  upsertedVectorIds: ["wordNode-0", "wordNode-1", "wordNode-2", "wordNode-3"]
-//  failed: 0,
-//  failedVectorIds: []
-// }
-```
-
-The API request to Pinecone would look something like this:
-
-```JSON
-{
-  "vectors": [
-    { "id": "wordNode-0", "values":[23], "metadata": { "nodeId": "wordNode" } },
-    { "id": "wordNode-1", "values":[15], "metadata": { "nodeId": "wordNode" } },
-    { "id": "wordNode-2", "values":[18], "metadata": { "nodeId": "wordNode" } },
-    { "id": "wordNode-3", "values":[4], "metadata": { "nodeId": "wordNode" } }
-  ]
-}
-```
-
-Notice that the vector has been split to fit the dimension of the index. The ids in Pinecone have been adapted to be indexed in order, prefixed by the node's id, and the metadata is preserved.
-
-The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically. Query's can still filter by that node id in the metadata.
-
 ### Fetching vectors
 
 Simple stuff. Note: this fetches vectors, not vectors for a node.
@@ -158,11 +121,19 @@ Deletes all vectors associated with the given node ids.
 This does not work on Starter plans, which don't support filters on delete operations. Use `deleteVectors` instead.
 
 ```typescript
+await client.delete("peter-piper");
+```
+
+#### For multiple nodes
+
+```typescript
 const nodeIds = ["wordNode", "peter-piper"];
-await client.delete(nodeIds, "Namespace (Optional: defaults to default namespace)");
+await client.deleteAll(nodeIds);
 ```
 
 #### By vector id
+
+If you have the vectors' ids handy, you're welcome to delete those specifically:
 
 ```typescript
 const vectorIds = [
@@ -216,5 +187,112 @@ class FancySparseValueBuilder implements SparseValueBuilder {
   }
 }
 
-const vectorStore = PineconeVectorStore("fancy-documents", {sparseValueBuilder: FancySparseValueBuilder});
+// Now we can use it!
+const vectorStore = PineconeVectorStore("fancy-documents", { sparseValueBuilder: FancySparseValueBuilder });
 ```
+
+When calling `add` or `upsert` with `includeSparseValues: true`, that builder will be used to generate sparse values being sent to Pinecone.
+
+## Advanced uses
+
+### Upsert
+
+Upsert is the underlying method that backs `add`. Let's look back at the example from `add`'s documentation above to see what else `upsert` tells us.
+
+
+
+```typescript
+import { Document } from "llamaindex";
+
+const tongueTwister = new Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?", id_: "peter-piper"})
+const embedding = [
+  1, 5310, 7362, 546, 18691, 263, 1236, 384, 310, 5839, 839, 1236,
+  22437, 29889, 319, 1236, 384, 310, 5839, 839, 1236, 22437, 5310, 7362,
+  546, 18691, 29889, 960, 5310, 7362, 546, 18691, 263, 1236, 384, 310,
+  5839, 839, 1236, 22437, 29892, 6804, 29915, 29879, 278, 1236, 384, 310,
+  5839, 839, 1236, 22437, 5310, 7362, 546, 18691, 29973
+];
+
+const nodesWithEmbeddings = [{node: tongueTwister, embedding}];
+await vectorStore.upsert(nodesWithEmbeddings);
+/**
+ * => {
+ *   upsertedNodeCount: 1,
+ *   upsertedNodeIds: ["peter-piper"],
+ *   upsertedVectorCount: 1,
+ *   upsertedVectorByNode: { "peter-piper": ["peter-piper"] }
+ *   failedNodeCount: 0,
+ *   failedNodeIds: [],
+ *   errors: []
+ *  }
+*/
+```
+
+It's a lot! Let's break down what's in there:
+
+- upsertedNodeCount: the total number of nodes upserted,
+- upsertedNodeIds: the node ids that were successfully upserted
+- upsertedVectorCount: the total number of vectors upserted
+- upsertedVectorByNode: a mapping of the node ids to the vectors that were upserted for that node
+- failedNodeCount: the number of nodes that failed to *fully* upsert
+- failedNodeIds: the ids of the nodes that failed to *fully* upsert
+- errors: an array of errors that occurred during upsert
+
+For most cases, `upsertedNodeCount` and `upsertedVectorCount` will be the same. See  the "Automatic Embedding Splitting" section below for the option to split nodes across multiple vectors.
+
+#### Automatic Embedding Splitting
+
+By default, the embedding for a node is expected to be exactly as long as the dimension of the index. If not, `PineconeVectorStore` will throw an error.
+
+If you have a large embedding that you would like automatically, though naively, chunked into multiple vectors the size of the index's dimension, set `splitEmbeddingsByDimension` to `true`:
+
+
+Here's a contrived example with a pinecone index whose dimension is `1`:
+
+```typescript
+const indexInfo = await myPineconeClient.Index("letters").describeIndexStats();
+console.log(indexInfo.dimension)
+// => 1
+
+const node = TextNode({text: "word", id_:"wordNode"})
+vectorStore.upsert([{ node , embedding: [23, 15, 18, 4]}], { splitEmbeddingsByDimension: true })
+/**
+ * => {
+ *   upsertedNodeCount: 1,
+ *   upsertedNodeIds: ["wordNode"],
+ *   upsertedVectorCount: 4,
+ *   upsertedVectorByNode: {
+ *     "wordNode": [
+ *       "wordNode-0",
+ *       "wordNode-1",
+ *       "wordNode-2",
+ *       "wordNode-3"
+ *     ]
+ *   },
+ *   failedNodeCount: 0,
+ *   failedNodeIds: [],
+ *   errors: []
+ *  }
+*/
+```
+
+The API request to Pinecone would look something like this:
+
+```JSON
+{
+  "vectors": [
+    { "id": "wordNode-0", "values":[23], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-1", "values":[15], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-2", "values":[18], "metadata": { "nodeId": "wordNode" } },
+    { "id": "wordNode-3", "values":[4], "metadata": { "nodeId": "wordNode" } }
+  ]
+}
+```
+
+Notice that the vector has been split to fit the dimension of the index. The ids in Pinecone have been adapted to be indexed in order, prefixed by the node's id, and the metadata is preserved.
+
+The node's id is always included in the metadata, so deleting the document handles cleaning up all related vectors automatically. Query's can still filter by that node id in the metadata.
+
+##### With batching
+
+Note that for batched requests, the vectors for a given node can be spread across multiple requests. These requests can succeed or fail independently, so it is possible for a given node id to be in both the upserted and failed lists. Since these are upserts, it is safe to retry the failed nodes.
