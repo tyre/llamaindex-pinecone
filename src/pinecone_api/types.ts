@@ -1,6 +1,6 @@
-import { SparseValues } from "index";
+import { PineconeMetadataBuilderClass, SparseValues } from "index";
 import { Vector as PineconeVector } from "@pinecone-database/pinecone";
-import { BaseNode } from "llamaindex";
+
 
 export type PineconeMetadata = Record<string, string | number | boolean | Array<string>>;
 
@@ -54,7 +54,7 @@ export type PineconeUpsertOptions = {
   batchSize?: number;
   includeSparseValues?: boolean;
   splitEmbeddingsByDimension?: boolean;
-  extractPineconeMetadata?: (node: BaseNode) => PineconeMetadata;
+  pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
 }
 
 export type PineconeUpsertResults = {

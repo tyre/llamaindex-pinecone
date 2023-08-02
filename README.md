@@ -71,23 +71,6 @@ await vectorStore.add({ node: tongueTwister, emedding })
 
 We see that it has returned an array of node ids that were successfully upserted to Pinecone.
 
-#### Metadata
-
-By default, PineconeVectorStore will upsert metadata in the form of:
-```
-{
-  nodeId: // .nodeId for the passed in node,
-  ...node.metadata
-}
-```
-
-To customize this, pass a function of type `(node: BaseNode) => PineconeMetadata` as the `extractPineconeMetadata` option for `add`. (`PineconeMetadata` is of type: `Record<string, string | number | boolean | Array<string>>;`)
-
-```typescript
-const metadataBuilder = (node) =>{ return { nextNodeId: node.nodeId + 1 } };
-await vectorStore.add({ node: tongueTwister, emedding }, { extractPineconeMetadata: metadataBuilder });
-```
-
 #### Passing duplicate vectors
 
 Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. The returned array will return the nodeId twice.
@@ -133,13 +116,35 @@ This will result in a sparse values dictionary included in vector upsert that lo
 
 #### `query`
 
-`PineconeVectorStore` implements `query` for the sake of complying with the `VectorStore`. Because a full implementation would require re-building all nodes from the returned results, which is not implemented, `query` presently throws an error every time.
+Let's imagine a Pinecone index that contains vectors of the last 80 years of US President innaugural addresses. We'll now craft a query of "I love America"—a sentiment we'd expect to be pretty common!—and see the top five most relevant results:
 
-Use `queryAll` instead.
+```typescript
+import { VectorStoreQueryMode } from "llamaindex";
+
+const speechQuery = "I love America";
+const queryEmbedding = Tokenizer.tokenize(speechQuery) // Tokenizer not included
+const queryResponse = await vectorStore.query({ queryEmbedding, similarityTopK: 5, mode: VectorStoreQueryMode.DEFAULT });
+// => {
+//   nodes: [],
+//   similarities: [ 0.134187013, 0.107230663, 0.095018886, 0.0797220916, 0.07660871 ],
+//   ids: [
+//     './speeches/inaugural-addresses/Dwight Eisenhower/1953.txt',
+//     './speeches/inaugural-addresses/Ronald Reagan/1981.txt',
+//     './speeches/inaugural-addresses/Franklin Delano Roosevelt/1945.txt',
+//     './speeches/inaugural-addresses/Richard Nixon/1973.txt',
+//     './speeches/inaugural-addresses/Harry Truman/1949.txt'
+//   ]
+// }
+```
+
+A top score of 0.13 is not inspiring, but you can see the shape of the response. By default, the node ids are read from the `nodeId` field of the Pinecone vector's metadata. The similarities scores and ids correspond to each other by array index; the first similarity is for the first id, the second similarity for the second id, etc.
+
+```
+```
 
 #### `queryAll`
 
-This method is mostly analagous with `VectorStore.query` except that it returns Pinecone's matches rather than nodes.
+This method is mostly analagous with `VectorStore.query` except that it returns more Pinecone's matches rather than nodes.
 
 ```typescript
 import { VectorStoreQuery, VectorStoreQueryMode } from 'llamaindex';
@@ -289,6 +294,39 @@ When calling `add` or `upsert` with `includeSparseValues: true`, that builder wi
 
 ## Advanced uses
 
+### Add
+
+#### Custom Vector Metadata Format
+
+By default, PineconeVectorStore will upsert metadata in the form of:
+
+```typescript
+{
+  nodeId: node.nodeId,
+  ...node.metadata
+}
+```
+
+To customize this, pass a class that implements `PineconeMetadataBuilder`. That means one methof of the signature `buildMetadata(node: BaseNode) => PineconeMetadata` as the `pineconeMetadataBuilder` option for `add`.
+
+For example, if you want to include the full node's content serialized into the metadata, you might have:
+
+```typescript
+class FullContentMetadataBuilder implements PineconeMetadataBuilder {
+  buildMetadata(node: BaseNode): PineconeMetadata {
+    const nodeContent = JSON.stringify(node);
+    const metadata: PineconeMetadata = {
+      nodeId: node.id_,
+      nodeType: node.getType(),
+      nodeContent,
+    };
+    return metadata;
+  }
+}
+await vectorStore.add({ node: tongueTwister, emedding }, { pineconeMetadataBuilder: metadataBuilder });
+```
+
+
 ### Upsert
 
 Upsert is the underlying method that backs `add`. Let's look back at the example from `add`'s documentation above to see what else `upsert` tells us.
@@ -333,6 +371,7 @@ It's a lot! Let's break down what's in there:
 - `errors`: an array of errors that occurred during upsert
 
 For most cases, `upsertedNodeCount` and `upsertedVectorCount` will be the same. See  the "Automatic Embedding Splitting" section below for the option to split nodes across multiple vectors.
+
 
 #### Automatic Embedding Splitting
 
@@ -390,3 +429,43 @@ The node's id is always included in the metadata, so deleting the document handl
 ##### With batching
 
 Note that for batched requests, the vectors for a given node can be spread across multiple requests. These requests can succeed or fail independently, so it is possible for a given node id to be in both the upserted and failed lists. Since these are upserts, it is safe to retry the failed nodes.
+
+### Querying
+
+#### Hydrating nodes from the vector metadata
+
+Returning the ids of nodes is fun, but maybe you'd like to re-build the nodes themselves. There are two options that can be passed into `query` that enable this:
+
+- `nodeHydrator`: a class conforming to NodeHydratorClass. Instances of this class must include a method of the signature `hydrate(vectorMetadata: PineconeMetadata) => BaseNode`;
+- `nodeHydratorOptions`: Something you want passed to the constructor of the `nodeHydrator`
+
+Included in this package is `FullContentNodeHydrator` which will:
+
+- Look for a `nodeContent` property on the vector's metadata
+- Parse it as JSON
+- Look for a `nodeType`
+- Match it against `ObjectType` in the llamaindex package
+- If it is "DOCUMENT", "TEXT", or "INDEX", initialized that node type passing in the node content to its constructor.
+
+To see how this works, less look at an example:
+
+```typescript
+import { Document } from "llamaindex";
+import { FullContentNodeHydrator } from "llamaindex-pinecone";
+// Example node object when it was originally upserted
+const originalNodeData = { id_: "document-11", text: "secret data", metadata: { author: "CIA" } };
+// What its vector metadata was upserted as
+const pineconeVectorMetadata = {
+  nodeId: "document-11",
+  nodeType: "DOCUMENT",
+  nodeContent: '{"id_":"document-11","text":"secret data","metadata":{"author":"CIA"}}'
+};
+
+// Now we make our query and ask it to use the FullContentNodeHydrator to rebuild the nodes.
+const queryResults = await pineconeVectorStore.query(vectorStoreQuery, { nodeHydrator: FullContentNodeHydrator });
+const expectedDocument = new Document(originalNodeData);
+expectedDocument == queryResults.nodes[0];
+// => true
+```
+
+This pairs nicely with the example in "Custom Vector Metadata Format" above, which will upsert nodes in that format automatically.

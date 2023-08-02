@@ -165,7 +165,7 @@ export class PineconeVectorStore implements VectorStore {
 
       // If they passed in a hydrator, we will use it to
       // reconstruct the nodes
-      if (kwargs.nodeHydrator as NodeHydratorClass) {
+      if (kwargs?.nodeHydrator as NodeHydratorClass) {
         const nodeHydrator = new kwargs.nodeHydrator(kwargs.nodeHydratorOptions);
         vectorStoreQueryResult.nodes!.push(nodeHydrator.hydrate(vectorMetadata));
       }
@@ -278,8 +278,8 @@ export class PineconeVectorStore implements VectorStore {
         sparseVectorBuilder: this.sparseVectorBuilder
       }
 
-      if (upsertOptions.extractPineconeMetadata)
-        vectorBuilderOptions.extractPineconeMetadata = upsertOptions.extractPineconeMetadata;
+      if (upsertOptions.pineconeMetadataBuilder)
+        vectorBuilderOptions.pineconeMetadataBuilder = upsertOptions.pineconeMetadataBuilder;
 
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(

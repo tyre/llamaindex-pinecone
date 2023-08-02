@@ -22,7 +22,11 @@ export type NodeHydrator = {
 // of `nodeContent` in the vector's metadata.
 export class FullContentNodeHydrator implements NodeHydrator {
   hydrate(vectorMetadata: PineconeMetadata): BaseNode {
-    const nodeAsJson = JSON.parse(vectorMetadata.nodeContent as string);
+    const nodeContent = vectorMetadata.nodeContent as string
+    if (!nodeContent) {
+      throw new Error(`Vector for node ${vectorMetadata.nodeId} has no nodeContent key in its metadata.`);
+    }
+    const nodeAsJson = JSON.parse(nodeContent);
 
     switch (vectorMetadata.nodeType as LlamaNodeType) {
       case LlamaNodeType.DOCUMENT:

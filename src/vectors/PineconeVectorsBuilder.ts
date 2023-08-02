@@ -1,6 +1,6 @@
 import { BaseNode } from "llamaindex";
 import { NaiveSparseValuesBuilder, SparseValues, SparseValuesBuilderClass } from "./sparse_values";
-import { PineconeMetadata } from "pinecone_api";
+import { SimpleMetadataBuilder, PineconeMetadataBuilderClass } from "..";
 import { Vector } from "@pinecone-database/pinecone";
 
 export type PineconeVectorsBuilderOptions = {
@@ -9,7 +9,7 @@ export type PineconeVectorsBuilderOptions = {
   dimension: number;
   splitEmbeddingsByDimension?: boolean;
   sparseVectorBuilder?: SparseValuesBuilderClass;
-  extractPineconeMetadata?: (node: BaseNode) => PineconeMetadata;
+  pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
 }
 
 export class PineconeVectorsBuilder {
@@ -20,13 +20,13 @@ export class PineconeVectorsBuilder {
   splitEmbeddingsByDimension: boolean = true;
   dimension: number;
   sparseVectorBuilder: SparseValuesBuilderClass = NaiveSparseValuesBuilder;
-  extractPineconeMetadata: (node: BaseNode) => PineconeMetadata = extractPineconeMetadata;
+  pineconeMetadataBuilder: PineconeMetadataBuilderClass = SimpleMetadataBuilder;
 
   constructor(node: BaseNode, embedding: number[], options: PineconeVectorsBuilderOptions) {
     this.node = node;
     this.embedding = this.normalizeEmbedding(embedding);
-    const passedOptions = Object.keys(options);
 
+    const passedOptions = Object.keys(options);
     if (passedOptions.includes("alpha")) this.alpha = options.alpha!;
     if (passedOptions.includes("includeSparseValues")) {
       this.includeSparseValues = options.includeSparseValues!;
@@ -38,7 +38,9 @@ export class PineconeVectorsBuilder {
     if (passedOptions.includes("sparseVectorBuilder")) {
       this.sparseVectorBuilder = options.sparseVectorBuilder!;
     }
-    if (options.extractPineconeMetadata) this.extractPineconeMetadata = options.extractPineconeMetadata;
+    if (passedOptions.includes("pineconeMetadataBuilder")) {
+      this.pineconeMetadataBuilder = options.pineconeMetadataBuilder!;
+    }
   }
 
   // Some tokenizers return BigInts, which Pinecone doesn't like.
@@ -78,10 +80,13 @@ export class PineconeVectorsBuilder {
     } else {
       vectorId = this.node.nodeId;
     }
+
+    const metadataBuilder = new this.pineconeMetadataBuilder();
+    const metadata = metadataBuilder.buildMetadata(this.node);
     const vector: Vector = {
       id: vectorId,
       values: embedding,
-      metadata: this.extractPineconeMetadata(this.node)
+      metadata
     };
     if (this.includeSparseValues) {
       vector.sparseValues = this.buildSparseValues(embedding);
@@ -113,11 +118,4 @@ export class PineconeVectorsBuilder {
     return vectors;
   }
 
-}
-
-function extractPineconeMetadata(node: BaseNode): PineconeMetadata {
-  return {
-    nodeId: node.nodeId,
-    ...node.metadata
-  };
 }

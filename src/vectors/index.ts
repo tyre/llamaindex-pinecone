@@ -1,3 +1,4 @@
 export * from "./PineconeVectorsBuilder";
-export * from "./FullContentNodeHydrator";
+export * from "./hydrators";
+export * from "./metadata_builders";
 export * from "./sparse_values";
