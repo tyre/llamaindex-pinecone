@@ -27,7 +27,6 @@ export class FullContentNodeHydrator implements NodeHydrator {
       throw new Error(`Vector for node ${vectorMetadata.nodeId} has no nodeContent key in its metadata.`);
     }
     const nodeAsJson = JSON.parse(nodeContent);
-
     switch (vectorMetadata.nodeType as LlamaNodeType) {
       case LlamaNodeType.DOCUMENT:
         return new LlamaDocument(nodeAsJson);
