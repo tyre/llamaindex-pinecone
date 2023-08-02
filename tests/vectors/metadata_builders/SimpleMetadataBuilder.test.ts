@@ -54,6 +54,15 @@ describe("SimpleMetadataBuilder", () => {
       };
       expect(() => builder.buildMetadata(node)).toThrowError("Metadata value for member of metadataKey cannot be an object");
     });
+
+    it("should not include a key if it is in the excludedMetadataKeys array", () => {
+      builder = new SimpleMetadataBuilder({ excludedMetadataKeys: ["metadataKey"] });
+      const metadata: PineconeMetadata = builder.buildMetadata(node);
+      expect(metadata).toEqual({
+        nodeId: node.nodeId,
+        metadataKey2: "metadataValue2"
+      });
+    });
   });
 });
 

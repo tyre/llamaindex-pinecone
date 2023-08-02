@@ -3,11 +3,11 @@ import { PineconeMetadata } from 'pinecone_api';
 import { PineconeMetadataBuilder } from './types';
 
 export type SimpleMetadataBuilderOptions = {
-  excluedMetadataKeys?: string[];
+  excludedMetadataKeys?: string[];
 };
 
 export class SimpleMetadataBuilder implements PineconeMetadataBuilder {
-  excluedMetadataKeys: string[] = [];
+  excludedMetadataKeys: string[] = [];
 
   constructor(options: SimpleMetadataBuilderOptions = {}) {
     Object.assign(this, options);
@@ -16,7 +16,7 @@ export class SimpleMetadataBuilder implements PineconeMetadataBuilder {
   buildMetadata(node: BaseNode): PineconeMetadata {
 
     return Object.entries(node.metadata).reduce((metadata, [key, value]): PineconeMetadata => {
-      if (this.excluedMetadataKeys.includes(key)) {
+      if (this.excludedMetadataKeys.includes(key)) {
         return metadata;
       } else if (typeof key !== "string") {
         throw new Error(`Metadata key ${key} must be a string`);
