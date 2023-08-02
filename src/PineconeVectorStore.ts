@@ -159,8 +159,8 @@ export class PineconeVectorStore implements VectorStore {
     };
 
     queryResults.forEach((scoredVector) => {
-      const vectorMetadata: PineconeMetadata = scoredVector.metadata!;
-      vectorStoreQueryResult.ids.push(vectorMetadata.nodeId);
+      const vectorMetadata: PineconeMetadata = scoredVector.metadata! as PineconeMetadata;
+      vectorStoreQueryResult.ids.push(vectorMetadata.nodeId as string);
       vectorStoreQueryResult.similarities.push(scoredVector.score!)
 
       // If they passed in a hydrator, we will use it to
