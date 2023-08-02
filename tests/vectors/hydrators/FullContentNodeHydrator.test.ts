@@ -70,12 +70,10 @@ describe('FullContentNodeHydrator', () => {
           indexId: 'index-id'
         })
       };
-      console.log({ vectorMetadata });
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaIndexNode);
       expect(node.nodeId).toEqual(vectorMetadata.nodeId);
-      console.dir({ node }, { depth: null });
       expect((node as LlamaIndexNode).indexId).toEqual('index-id');
     });
 
