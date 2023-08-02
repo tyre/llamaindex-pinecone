@@ -5,7 +5,6 @@ import { FullContentMetadataBuilder } from "../../../src/vectors/metadata_builde
 
 describe("FullContentMetadataBuilder", () => {
   it("should return a PineconeMetadata object with the nodeId, nodeType, and nodeContent", () => {
-
     const node = new Document({
       id_: "nodeId",
       metadata: {

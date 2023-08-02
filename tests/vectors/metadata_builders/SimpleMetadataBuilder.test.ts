@@ -2,14 +2,6 @@ import { SimpleMetadataBuilder } from "../../../src";
 import { Document } from 'llamaindex';
 import { PineconeMetadata } from 'pinecone_api';
 
-// export class SimpleMetadataBuilder implements PineconeMetadataBuilder {
-//   buildMetadata(node: BaseNode): PineconeMetadata {
-//     return {
-//       nodeId: node.nodeId,
-//       ...node.metadata
-//     };
-//   }
-// }
 describe("SimpleMetadataBuilder", () => {
   let node: Document;
   let builder: SimpleMetadataBuilder;
