@@ -55,6 +55,7 @@ export type PineconeUpsertOptions = {
   includeSparseValues?: boolean;
   splitEmbeddingsByDimension?: boolean;
   pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
+  pineconeMetadataBuilderOptions?: Record<string, unknown>;
 }
 
 export type PineconeUpsertResults = {

@@ -10,6 +10,7 @@ export type PineconeVectorsBuilderOptions = {
   splitEmbeddingsByDimension?: boolean;
   sparseVectorBuilder?: SparseValuesBuilderClass;
   pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
+  pineconeMetadataBuilderOptions?: Record<string, unknown>;
 }
 
 export class PineconeVectorsBuilder {
@@ -21,6 +22,7 @@ export class PineconeVectorsBuilder {
   dimension: number;
   sparseVectorBuilder: SparseValuesBuilderClass = NaiveSparseValuesBuilder;
   pineconeMetadataBuilder: PineconeMetadataBuilderClass = SimpleMetadataBuilder;
+  pineconeMetadataBuilderOptions?: Record<string, unknown>;
 
   constructor(node: BaseNode, embedding: number[], options: PineconeVectorsBuilderOptions) {
     this.node = node;
@@ -41,6 +43,7 @@ export class PineconeVectorsBuilder {
     if (passedOptions.includes("pineconeMetadataBuilder")) {
       this.pineconeMetadataBuilder = options.pineconeMetadataBuilder!;
     }
+    this.pineconeMetadataBuilderOptions = options.pineconeMetadataBuilderOptions;
   }
 
   // Some tokenizers return BigInts, which Pinecone doesn't like.
@@ -81,7 +84,7 @@ export class PineconeVectorsBuilder {
       vectorId = this.node.nodeId;
     }
 
-    const metadataBuilder = new this.pineconeMetadataBuilder();
+    const metadataBuilder = new this.pineconeMetadataBuilder(this.pineconeMetadataBuilderOptions);
     const metadata = metadataBuilder.buildMetadata(this.node);
     const vector: Vector = {
       id: vectorId,

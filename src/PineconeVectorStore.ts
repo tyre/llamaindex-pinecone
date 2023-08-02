@@ -112,21 +112,6 @@ export class PineconeVectorStore implements VectorStore {
   }
 
   /**
-   * 
-   * @param embeddingResults - A list of nodes with their embeddings
-   * @param kwargs - Keyword arguments for the upsert operation
-   * @returns List of node ids that had their embeddings uploaded
-   * 
-   * This is a simplified call `upsert` behind the scenes.
-   */
-  // The interface requires an `any` return type, so ignoring lint.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async add(embeddingResults: NodeWithEmbedding[], kwargs?: any): Promise<string[]> {
-    const upsertResults = await this.upsert(embeddingResults, kwargs);
-    return upsertResults.upsertedNodeIds;
-  }
-
-  /**
    * Query pinecone for the given query vector.
    * @param {VectorStoreQuery} query - Vector store query. Must include at least
    *    the `similarityTopK` and `queryEmbedding`.
@@ -223,6 +208,20 @@ export class PineconeVectorStore implements VectorStore {
     return Promise.resolve(matches || []);
   }
 
+  /**
+   * 
+   * @param embeddingResults - A list of nodes with their embeddings
+   * @param kwargs - Keyword arguments for the upsert operation
+   * @returns List of node ids that had their embeddings uploaded
+   * 
+   * This is a simplified call `upsert` behind the scenes.
+   */
+  // The interface requires an `any` return type, so ignoring lint.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async add(embeddingResults: NodeWithEmbedding[], kwargs?: any): Promise<string[]> {
+    const upsertResults = await this.upsert(embeddingResults, kwargs);
+    return upsertResults.upsertedNodeIds;
+  }
 
   DEFAULT_UPSERT_OPTIONS = {
     splitEmbeddingsByDimension: false,
@@ -280,6 +279,8 @@ export class PineconeVectorStore implements VectorStore {
 
       if (upsertOptions.pineconeMetadataBuilder)
         vectorBuilderOptions.pineconeMetadataBuilder = upsertOptions.pineconeMetadataBuilder;
+      if (upsertOptions.pineconeMetadataBuilderOptions)
+        vectorBuilderOptions.pineconeMetadataBuilderOptions = upsertOptions.pineconeMetadataBuilderOptions;
 
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(

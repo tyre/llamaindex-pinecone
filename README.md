@@ -323,9 +323,32 @@ class FullContentMetadataBuilder implements PineconeMetadataBuilder {
     return metadata;
   }
 }
-await vectorStore.add({ node: tongueTwister, emedding }, { pineconeMetadataBuilder: metadataBuilder });
+await vectorStore.add({ node: tongueTwister, emedding }, { pineconeMetadataBuilder: FullContentMetadataBuilder });
 ```
 
+In fact, this exact implementation is included out of the box. `import { FullContentMetadataBuilder } from "pinecone-llamaindex"` today!
+
+#### Custom Vector Metadata Options
+
+Out of the box, `PineconeVectorStore.add` and `.upsert` use `SimpleMetadataBuilder`. It essentially adds the `nodeId` and then splats the `node.metadata` into an object. For Pinecone metadata, the only acceptable keys are string and values must be strings, numbers, booleans, or arrays of those types.
+
+`pineconeMetadataBuilderOptions` is an optional parameter which will filter down to that builder. Fort the simple builder, the only presently supported option is `excludedMetadataKeys`, which takes an array of keys to skip.
+
+```typescript
+tongueTwister.metadata = {
+  difficulty: "medium",
+  age: "old",
+  pineconeAPIKey: "xxxxxxxxxxxxxxxx"
+}
+
+const pineconeMetadataBuilderOptions = { excludedMetadataKeys: ["pineconeAPIKey"] }
+
+await vectorStore.add({node: tongueTwister, embedding }, { pineconeMetadataBuilderOptions })
+```
+
+In this case, only `{ diffculty: "medium", age: "old" }` will be upserted to Pinecone, but the `tongueTwister` node itself will remain untouched.
+
+This can be even more useful when implementing a custom `PineconeMetadataBuilder` as seen above.
 
 ### Upsert
 
