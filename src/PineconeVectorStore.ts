@@ -1,15 +1,16 @@
 import {
-  NodeWithEmbedding, BaseNode, GenericFileSystem,
+  NodeWithEmbedding,
+  BaseNode,
   VectorStoreQueryResult,
   VectorStoreQueryMode,
-  MetadataFilters,
   VectorStoreQuery,
-  VectorStore
+  VectorStore,
 } from "llamaindex";
 import { PineconeClient, Vector as PineconeVector, ScoredVector as PineconeScoredVector } from "@pinecone-database/pinecone";
-import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder, PineconeVectorsBuilderOptions } from ".";
+import { PineconeMetadata, SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder, PineconeVectorsBuilderOptions } from ".";
 import { DeleteRequest, VectorOperationsApi as PineconeIndex } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { PineconeQueryBuilder, PineconeUpsertOptions, PineconeUpsertResults, PineconeVectorsUpsert, PineconeQueryBuilderOptions, PineconeUpsertVectorsRecord } from "./pinecone_api";
+import { NodeHydratorClass } from "vectors";
 
 type PineconeVectorStoreOptions = {
   indexName: string;
@@ -76,6 +77,8 @@ export class PineconeVectorStore implements VectorStore {
    * 2. Calling `getPineconeClient` when no client is passed in.
    * @returns {PineconeClient}
    */
+  // The interface requires an `any` return type, so ignoring lint.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get client(): any {
     return this.pineconeClient;
   }
@@ -116,20 +119,59 @@ export class PineconeVectorStore implements VectorStore {
    * 
    * This is a simplified call `upsert` behind the scenes.
    */
+  // The interface requires an `any` return type, so ignoring lint.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async add(embeddingResults: NodeWithEmbedding[], kwargs?: any): Promise<string[]> {
     const upsertResults = await this.upsert(embeddingResults, kwargs);
     return upsertResults.upsertedNodeIds;
   }
 
-  // The query signature for VectorStore requires returning a VectorStoreQueryResult,
-  // which includes nodes. The only way to return nodes is to rebuild them from a pinecone
-  // query result. Because nodes contain the source data (e.g. the text), we would have to
-  // store the entire text in the metadata of the vector. Under discussion whether that's a
-  // good idea and, if not, whether the library should encourage it.
+  /**
+   * Query pinecone for the given query vector.
+   * @param {VectorStoreQuery} query - Vector store query. Must include at least
+   *    the `similarityTopK` and `queryEmbedding`.
+   * @param {any} kwargs - Keyword arguments passed to the underlying call to `queryAll`.
+   *   The one argument specific to this function is `nodeHydrator`, which is a class
+   *   that implements `NodeHydratorClass`. It is used to hydrate the nodes from the
+   *   metadata returned by pinecone.
+   * 
+   * @returns {Promise<VectorStoreQueryResult>} - A promise that resolves to a
+   *   `VectorStoreQueryResult` object. It is guaranteed to return the `ids` and
+   *   `similarities` fields.
+   * 
+   *   If the `nodeHydrator` argument is passed, the result object will also
+   *   return the `nodes` field. To reform the nodes, it will use:
+   *   `(new args.nodeHydrator(args.nodeHydratorOptions)).hydrate(vectorMetadata)`
+   *   for each vector's metdata. The `nodeHydratorOptions` may be useful for
+   *   things like a database connection, a mappings object, etc.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async query(query: VectorStoreQuery, kwargs?: any): Promise<VectorStoreQueryResult> {
-    throw "Unimplemented. Users should instead use `queryAll` to return an array of scored vectors.\
-    These can then be matched with the original nodes via `vector.metdata.nodeId`."
-    return Promise.resolve({ ids: [], similarities: [] });
+
+    // We never want to include the values since this function doesn't use them.
+    // We always want the metadata.
+    const queryAllArgs = { ...kwargs, includeValues: false, includeMetadata: true };
+    const queryResults = await this.queryAll(query, queryAllArgs);
+    const vectorStoreQueryResult: VectorStoreQueryResult = {
+      nodes: [] as BaseNode[],
+      similarities: [] as number[],
+      ids: [] as string[]
+    };
+
+    queryResults.forEach((scoredVector) => {
+      const vectorMetadata: PineconeMetadata = scoredVector.metadata!;
+      vectorStoreQueryResult.ids.push(vectorMetadata.nodeId);
+      vectorStoreQueryResult.similarities.push(scoredVector.score!)
+
+      // If they passed in a hydrator, we will use it to
+      // reconstruct the nodes
+      if (kwargs.nodeHydrator as NodeHydratorClass) {
+        const nodeHydrator = new kwargs.nodeHydrator(kwargs.nodeHydratorOptions);
+        vectorStoreQueryResult.nodes!.push(nodeHydrator.hydrate(vectorMetadata));
+      }
+    }, vectorStoreQueryResult)
+
+    return vectorStoreQueryResult;
   }
 
   /**
@@ -150,13 +192,14 @@ export class PineconeVectorStore implements VectorStore {
    *    - sparseValues: the sparse values of the vector
    *    - metadata: the metadata of the vector, if includeMetadata was true
   */
+  // The interface requires an `any` return type, so ignoring lint.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async queryAll(query: VectorStoreQuery, kwargs?: any): Promise<Array<PineconeScoredVector>> {
     const passedArguments = Object.keys(kwargs || {});
     const queryBuilderOptions: PineconeQueryBuilderOptions = {
       vector: query.queryEmbedding,
       topK: query.similarityTopK,
       alpha: query.alpha,
-      // @ts-ignore
       filters: query.filters,
       namespace: kwargs?.namespace,
       id: kwargs?.vectorId,
@@ -308,6 +351,8 @@ export class PineconeVectorStore implements VectorStore {
     return deleteResponse;
   }
 
+  // The interface requires an `any` return type, so ignoring lint.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async delete(refDocId: string, deleteKwargs?: any): Promise<void> {
     await this.deleteAll([refDocId], deleteKwargs?.namespace);
     return Promise.resolve();
@@ -315,8 +360,8 @@ export class PineconeVectorStore implements VectorStore {
 
   // No-op implementation to fulfill VectorStore interface.
   // We've been persisting all along!
-  async persist(_persistPath: string, _fs?: GenericFileSystem): Promise<void> {
-    return;
+  async persist(): Promise<void> {
+    return Promise.resolve();
   }
 
 }

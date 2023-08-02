@@ -1,4 +1,4 @@
-import { ExactMatchFilter, MetadataFilters } from "llamaindex";
+import { MetadataFilters } from "llamaindex";
 import { QueryRequest } from "@pinecone-database/pinecone";
 import { SparseValues } from "vectors";
 import { PineconeMetadataFilters, PineconeMetadataFilterKey } from "./types";
@@ -69,8 +69,6 @@ export class PineconeQueryBuilder {
       throw new Error('One of `id` or `vector` are required.');
     } else if (options.id && options.vector) {
       throw new Error('Only one of `id` and `vector` are allowed.');
-    } else if (options) {
-
     }
     this.topK = options.topK;
 

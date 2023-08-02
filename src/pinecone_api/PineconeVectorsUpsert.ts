@@ -39,19 +39,14 @@ export class PineconeVectorsUpsert {
   // Upserts a single array of pinecone vectors. This assumes that the vectors are
   // less than or equal to the desired batch size.
   async singleUpsert(vectorsByNode: NodePineconeVectorMap): Promise<PineconeUpsertResults> {
-    let upsertedCount = 0;
 
     // Since we are upserting all vectors at once, we need to flatten the vectors.
-    const builtVectors = Object.entries(vectorsByNode).reduce((allVectors, [nodeId, vectors]) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const builtVectors = Object.entries(vectorsByNode).reduce((allVectors, [_nodeId, vectors]) => {
       return allVectors.concat(vectors);
     }, [] as PineconeVector[]);
 
-    try {
-      const upsertResponse = await this.pineconeIndex.upsert({ upsertRequest: { vectors: builtVectors } });
-      upsertedCount = upsertResponse.upsertedCount || 0;
-    } catch (e) {
-      throw `Error with call to Pinecone: ${e}`;
-    }
+    await this.pineconeIndex.upsert({ upsertRequest: { vectors: builtVectors } });
 
     const upsertedNodeIds = Object.keys(vectorsByNode);
     const upsertResults = {
@@ -73,10 +68,9 @@ export class PineconeVectorsUpsert {
   buildVectorBatches(vectorsByNode: NodePineconeVectorMap, batchSize: number): Array<NodePineconeVectorMap> {
     let currentVectorBatch = {} as NodePineconeVectorMap;
     let currentVectorBatchSize = 0;
-    // let nodeIdsProcessed = 0;
 
     const nodeVectorEntries = Object.entries(vectorsByNode);
-    const builtVectorBatches = nodeVectorEntries.reduce((builtVectorBatches, [nodeId, vectors], currentIndex) => {
+    const builtVectorBatches = nodeVectorEntries.reduce((builtVectorBatches, [nodeId, vectors]) => {
 
       // If adding the vectors from this node to the current batch would
       // not put us over the batch size, add them to the current batch.
@@ -139,6 +133,7 @@ export class PineconeVectorsUpsert {
     // Wait for all batch upserts to complete, then sum the upserted counts.
     Promise.all(batchUpsertPromises)
       .then((successfulBatchUpserts) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         for (const [_upsertResponse, vectorsByNode] of successfulBatchUpserts) {
           for (const [nodeId, vectors] of Object.entries(vectorsByNode as NodePineconeVectorMap)) {
             totalBatchUpsertResults.upsertedNodeCount += 1;
@@ -151,7 +146,7 @@ export class PineconeVectorsUpsert {
       }).catch((failedBatchUpserts) => {
         // For all of the failed upserts, add their node ids and collect their errors.
         for (const [error, vectorsByNode] of failedBatchUpserts) {
-          for (const [nodeId, _vectors] of Object.entries(vectorsByNode as NodePineconeVectorMap)) {
+          for (const [nodeId] of Object.entries(vectorsByNode as NodePineconeVectorMap)) {
             totalBatchUpsertResults.failedNodeCount += 1;
             totalBatchUpsertResults.failedNodeIds.push(nodeId);
             totalBatchUpsertResults.errors.push(error);
