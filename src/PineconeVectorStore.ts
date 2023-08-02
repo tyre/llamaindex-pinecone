@@ -236,7 +236,7 @@ export class PineconeVectorStore implements VectorStore {
       }
 
       if (upsertOptions.extractPineconeMetadata)
-        vectorBuilderOptions.extractPineconeMetadata = extractPineconeMetadata;
+        vectorBuilderOptions.extractPineconeMetadata = upsertOptions.extractPineconeMetadata;
 
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(
