@@ -1,10 +1,9 @@
 import { BaseNode } from "llamaindex";
 import { NaiveSparseValuesBuilder, SparseValues, SparseValuesBuilderClass } from "./sparse_values";
+import { PineconeMetadata } from "pinecone_api";
 import { Vector } from "@pinecone-database/pinecone";
 
-type PineconeMetadata = Record<string, string | number | boolean | Array<string>>;
-
-type PineconeVectorsBuilderOptions = {
+export type PineconeVectorsBuilderOptions = {
   alpha?: number;
   includeSparseValues?: boolean;
   dimension: number;

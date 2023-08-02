@@ -62,7 +62,24 @@ await vectorStore.add({ node: tongueTwister, emedding })
 
 We see that it has returned an array of node ids that were successfully upserted to Pinecone.
 
-##### Passing duplicate vectors
+#### Metadata
+
+By default, PineconeVectorStore will upsert metadata in the form of:
+```
+{
+  nodeId: // .nodeId for the passed in node,
+  ...node.metadata
+}
+```
+
+To customize this, pass a function of type `(node: BaseNode) => PineconeMetadata` as the `extractPineconeMetadata` option for `add`. (`PineconeMetadata` is of type: `Record<string, string | number | boolean | Array<string>>;`)
+
+```typescript
+const metadataBuilder = (node) =>{ return { nextNodeId: node.nodeId + 1 } };
+await vectorStore.add({ node: tongueTwister, emedding }, { extractPineconeMetadata: metadataBuilder });
+```
+
+#### Passing duplicate vectors
 
 Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. The returned array will return the nodeId twice.
 

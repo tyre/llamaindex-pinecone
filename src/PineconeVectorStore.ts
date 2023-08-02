@@ -7,7 +7,7 @@ import {
   VectorStore
 } from "llamaindex";
 import { PineconeClient, Vector as PineconeVector, ScoredVector as PineconeScoredVector } from "@pinecone-database/pinecone";
-import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder } from ".";
+import { SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder, PineconeVectorsBuilderOptions } from ".";
 import { DeleteRequest, VectorOperationsApi as PineconeIndex } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { PineconeQueryBuilder, PineconeUpsertOptions, PineconeUpsertResults, PineconeVectorsUpsert, PineconeQueryBuilderOptions, PineconeUpsertVectorsRecord } from "./pinecone_api";
 
@@ -228,16 +228,21 @@ export class PineconeVectorStore implements VectorStore {
         throw new Error(`Node ${node.nodeId} does not have an embedding.`);
       }
 
+      const vectorBuilderOptions: PineconeVectorsBuilderOptions = {
+        includeSparseValues: upsertOptions.includeSparseValues,
+        dimension: indexStats.dimension,
+        splitEmbeddingsByDimension: upsertOptions.splitEmbeddingsByDimension,
+        sparseVectorBuilder: this.sparseVectorBuilder
+      }
+
+      if (upsertOptions.extractPineconeMetadata)
+        vectorBuilderOptions.extractPineconeMetadata = extractPineconeMetadata;
+
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(
         node,
         embedding,
-        {
-          includeSparseValues: upsertOptions.includeSparseValues,
-          dimension: indexStats.dimension,
-          splitEmbeddingsByDimension: upsertOptions.splitEmbeddingsByDimension,
-          sparseVectorBuilder: this.sparseVectorBuilder
-        }
+        vectorBuilderOptions
       );
       const vectors = vectorsBuilder.buildVectors()
       builtVectorsByNode.totalVectorCount += vectors.length;

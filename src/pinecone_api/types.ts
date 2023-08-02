@@ -1,5 +1,8 @@
 import { SparseValues } from "index";
 import { Vector as PineconeVector } from "@pinecone-database/pinecone";
+import { BaseNode } from "llamaindex";
+
+export type PineconeMetadata = Record<string, string | number | boolean | Array<string>>;
 
 export enum PineconeMetadataFilterKey {
   EqualTo = "$eq", // - Equal to (number, string, boolean)
@@ -51,6 +54,7 @@ export type PineconeUpsertOptions = {
   batchSize?: number;
   includeSparseValues?: boolean;
   splitEmbeddingsByDimension?: boolean;
+  extractPineconeMetadata?: (node: BaseNode) => PineconeMetadata;
 }
 
 export type PineconeUpsertResults = {
