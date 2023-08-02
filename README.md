@@ -324,13 +324,13 @@ await vectorStore.upsert(nodesWithEmbeddings);
 
 It's a lot! Let's break down what's in there:
 
-- upsertedNodeCount: the total number of nodes upserted,
-- upsertedNodeIds: the node ids that were successfully upserted
-- upsertedVectorCount: the total number of vectors upserted
-- upsertedVectorByNode: a mapping of the node ids to the vectors that were upserted for that node
-- failedNodeCount: the number of nodes that failed to *fully* upsert
-- failedNodeIds: the ids of the nodes that failed to *fully* upsert
-- errors: an array of errors that occurred during upsert
+- `upsertedNodeCount`: the total number of nodes upserted,
+- `upsertedNodeIds`: the node ids that were successfully upserted
+- `upsertedVectorCount`: the total number of vectors upserted
+- `upsertedVectorByNode`: a mapping of the node ids to the vectors that were upserted for that node
+- `failedNodeCount`: the number of nodes that failed to *fully* upsert
+- `failedNodeIds`: the ids of the nodes that failed to *fully* upsert
+- `errors`: an array of errors that occurred during upsert
 
 For most cases, `upsertedNodeCount` and `upsertedVectorCount` will be the same. See  the "Automatic Embedding Splitting" section below for the option to split nodes across multiple vectors.
 
