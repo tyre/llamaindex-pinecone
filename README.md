@@ -113,7 +113,7 @@ This will result in a sparse values dictionary included in vector upsert that lo
 
 Now that we've put some data into Pinecone, let's take it back out again.
 
-#### `query`
+#### The old standby: `query`
 
 Let's imagine a Pinecone index that contains vectors of the last 80 years of US President innaugural addresses. We'll now craft a query of "I love America"—a sentiment we'd expect to be pretty common!—and see the top five most relevant results:
 
@@ -140,7 +140,7 @@ A top score of 0.13 is not inspiring, but, at least for README purposes, you can
 
 If you would like `query` to rebuild the nodes themselves, see "Hydrating nodes from the vector metadata" down below!
 
-#### `queryAll`
+#### Looking for more: `queryAll`
 
 This method is mostly analagous with `VectorStore.query` except that it returns Pinecone's matches rather than nodes.
 
