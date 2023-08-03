@@ -27,7 +27,7 @@ The heart and soul of this package is `PineconeVectorStore`. Let's see how that 
 
 ### `VectorStore` interface compliance
 
-`PineconeVectorStore` adheres to the `VectorStore` interface from `llamaindex` almost entirely. Here is the `VectorStore` interface:
+`PineconeVectorStore` adheres to the `VectorStore` interface from `llamaindex`:
 
 ```typescript
 export interface VectorStore {
@@ -42,6 +42,8 @@ export interface VectorStore {
 ```
 
 ### Creating a store
+
+All you need to get started is the name of the index in Pinecone:
 
 ```typescript
 import { PineconeVectorStore } from "llamaindex-pinecone";
@@ -69,11 +71,7 @@ await vectorStore.add({ node: tongueTwister, emedding })
 // => ["peter-piper]
 ```
 
-We see that it has returned an array of node ids that were successfully upserted to Pinecone.
-
-#### Passing duplicate vectors
-
-Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. The returned array will return the nodeId twice.
+We see that it has returned an array of node ids that were successfully upserted to Pinecone. Woohoo!
 
 #### Batching
 
@@ -111,8 +109,9 @@ This will result in a sparse values dictionary included in vector upsert that lo
 }
 ```
 
-
 ### Querying
+
+Now that we've put some data into Pinecone, let's take it back out again.
 
 #### `query`
 
@@ -137,27 +136,25 @@ const queryResponse = await vectorStore.query({ queryEmbedding, similarityTopK: 
 // }
 ```
 
-A top score of 0.13 is not inspiring, but you can see the shape of the response. By default, the node ids are read from the `nodeId` field of the Pinecone vector's metadata. The similarities scores and ids correspond to each other by array index; the first similarity is for the first id, the second similarity for the second id, etc.
+A top score of 0.13 is not inspiring, but, at least for README purposes, you can see the shape of the response. By default, the node ids are read from the `nodeId` field of the Pinecone vector's metadata. The similarities scores and ids correspond to each other by array index: the first similarity is for the first id, the second similarity for the second id, etc.
 
-```
-```
+If you would like `query` to rebuild the nodes themselves, see "Hydrating nodes from the vector metadata" down below!
 
 #### `queryAll`
 
-This method is mostly analagous with `VectorStore.query` except that it returns more Pinecone's matches rather than nodes.
+This method is mostly analagous with `VectorStore.query` except that it returns Pinecone's matches rather than nodes.
 
 ```typescript
 import { VectorStoreQuery, VectorStoreQueryMode } from 'llamaindex';
 
+// A class that shows the subset of `VectorStoreQuery` fields supported
+// by the PineconeVectorStore (and their API.)
 class PineconeVectorStoreQuery implements VectorStoreQuery {
   queryEmbedding?: number[];
   similarityTopK: number;
-  docIds?: string[];
-  queryStr?: string;
   mode: VectorStoreQueryMode;
   alpha?: number;
   filters?: MetadataFilters;
-  mmrThreshold?: number;
 
   constructor(args: any) {
     Object.assign(this, args);
@@ -217,7 +214,7 @@ vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to defa
 Deletes all vectors associated with the given node ids.
 
 🚨 NOTE 🚨
-This does not work on Starter plans, which don't support filters on delete operations. Use `deleteVectors` instead.
+This does not work on Free/Starter plans, which don't support filters on delete operations. Use `deleteVectors` instead.
 
 ```typescript
 await client.delete("peter-piper");
@@ -246,7 +243,7 @@ await client.deleteVectors(vectorIds, "Namespace (Optional: defaults to default 
 
 ### Customization
 
-`PineconeVectorStore` works well out of the box. You might want some customization, thought.
+`PineconeVectorStore` works well out of the box. You might want some customization, though.
 
 #### Customizing the client
 
@@ -355,7 +352,6 @@ This can be even more useful when implementing a custom `PineconeMetadataBuilder
 Upsert is the underlying method that backs `add`. Let's look back at the example from `add`'s documentation above to see what else `upsert` tells us.
 
 
-
 ```typescript
 import { Document } from "llamaindex";
 
@@ -394,6 +390,10 @@ It's a lot! Let's break down what's in there:
 - `errors`: an array of errors that occurred during upsert
 
 For most cases, `upsertedNodeCount` and `upsertedVectorCount` will be the same. See  the "Automatic Embedding Splitting" section below for the option to split nodes across multiple vectors.
+
+#### Passing duplicate vectors
+
+Note that the passing duplicate nodes—those with identical node ids—and embeddings will only create one vector in Pinecone, but the response will count both. The returned array will return the nodeId twice.
 
 
 #### Automatic Embedding Splitting
