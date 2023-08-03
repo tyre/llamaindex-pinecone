@@ -8,7 +8,7 @@ import {
 import { PineconeMetadata } from "pinecone_api";
 
 
-export type NodeHydratorClass = {
+export interface NodeHydratorClass {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   new: (args?: any) => NodeHydrator;
 }

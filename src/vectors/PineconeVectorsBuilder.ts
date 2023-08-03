@@ -18,32 +18,23 @@ export class PineconeVectorsBuilder {
   embedding: number[];
   alpha: number = 0;
   includeSparseValues: boolean = false;
-  splitEmbeddingsByDimension: boolean = true;
+  splitEmbeddingsByDimension: boolean = false;
   dimension: number;
-  sparseVectorBuilder: SparseValuesBuilderClass = NaiveSparseValuesBuilder;
-  pineconeMetadataBuilder: PineconeMetadataBuilderClass = SimpleMetadataBuilder;
-  pineconeMetadataBuilderOptions?: Record<string, unknown>;
+  sparseVectorBuilder: SparseValuesBuilderClass;
+  pineconeMetadataBuilder: PineconeMetadataBuilderClass;
+  pineconeMetadataBuilderOptions: Record<string, unknown>;
 
   constructor(node: BaseNode, embedding: number[], options: PineconeVectorsBuilderOptions) {
     this.node = node;
     this.embedding = this.normalizeEmbedding(embedding);
 
-    const passedOptions = Object.keys(options);
-    if (passedOptions.includes("alpha")) this.alpha = options.alpha!;
-    if (passedOptions.includes("includeSparseValues")) {
-      this.includeSparseValues = options.includeSparseValues!;
-    }
-    if (passedOptions.includes("splitEmbeddingsByDimension")) {
-      this.splitEmbeddingsByDimension = options.splitEmbeddingsByDimension!;
-    }
+    this.alpha = options.alpha ?? 0;
+    this.includeSparseValues = options.includeSparseValues ?? false;
+    this.splitEmbeddingsByDimension = options.splitEmbeddingsByDimension ?? false;
     this.dimension = options.dimension;
-    if (passedOptions.includes("sparseVectorBuilder")) {
-      this.sparseVectorBuilder = options.sparseVectorBuilder!;
-    }
-    if (passedOptions.includes("pineconeMetadataBuilder")) {
-      this.pineconeMetadataBuilder = options.pineconeMetadataBuilder!;
-    }
-    this.pineconeMetadataBuilderOptions = options.pineconeMetadataBuilderOptions;
+    this.sparseVectorBuilder = options.sparseVectorBuilder ?? NaiveSparseValuesBuilder;
+    this.pineconeMetadataBuilder = options.pineconeMetadataBuilder ?? SimpleMetadataBuilder;
+    this.pineconeMetadataBuilderOptions = options.pineconeMetadataBuilderOptions ?? {};
   }
 
   // Some tokenizers return BigInts, which Pinecone doesn't like.

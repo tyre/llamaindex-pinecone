@@ -317,7 +317,7 @@ By default, PineconeVectorStore will upsert metadata in the form of:
 }
 ```
 
-To customize this, pass a class that implements `PineconeMetadataBuilder`. That means one methof of the signature `buildMetadata(node: BaseNode) => PineconeMetadata` as the `pineconeMetadataBuilder` option for `add`.
+To customize this, pass a class that implements `PineconeMetadataBuilder`. That means one methof of the signature `buildMetadata(node: BaseNode) => PineconeMetadata` as the `pineconeMetadataBuilder` option for the `PineconeVectorStore` constructor.
 
 For example, if you want to include the full node's content serialized into the metadata, you might have:
 
@@ -333,7 +333,8 @@ class FullContentMetadataBuilder implements PineconeMetadataBuilder {
     return metadata;
   }
 }
-await vectorStore.add({ node: tongueTwister, emedding }, { pineconeMetadataBuilder: FullContentMetadataBuilder });
+const pineconeVectorStore = new PineconeVectorStore("speeches", { pineconeMetadataBuilder: FullContentMetadataBuilder });
+await vectorStore.add({ node: tongueTwister, emedding });
 ```
 
 In fact, this exact implementation is included out of the box. `import { FullContentMetadataBuilder } from "pinecone-llamaindex"` today!
@@ -342,7 +343,7 @@ In fact, this exact implementation is included out of the box. `import { FullCon
 
 Out of the box, `PineconeVectorStore.add` and `.upsert` use `SimpleMetadataBuilder`. It essentially adds the `nodeId` and then splats the `node.metadata` into an object. For Pinecone metadata, the only acceptable keys are string and values must be strings, numbers, booleans, or arrays of those types.
 
-`pineconeMetadataBuilderOptions` is an optional parameter which will filter down to that builder. Fort the simple builder, the only presently supported option is `excludedMetadataKeys`, which takes an array of keys to skip.
+`pineconeMetadataBuilderOptions` is an optional parameter on the `PineconeVectorStore` constructor which will filter down to that builder. Fort the simple builder, the only presently supported option is `excludedMetadataKeys`, which takes an array of keys to skip.
 
 ```typescript
 tongueTwister.metadata = {
@@ -351,9 +352,11 @@ tongueTwister.metadata = {
   pineconeAPIKey: "xxxxxxxxxxxxxxxx"
 }
 
+
+const pineconeVectorStore = new PineconeVectorStore("speeches", { pineconeMetadataBuilderOptions });
 const pineconeMetadataBuilderOptions = { excludedMetadataKeys: ["pineconeAPIKey"] }
 
-await vectorStore.add({node: tongueTwister, embedding }, { pineconeMetadataBuilderOptions })
+await vectorStore.add({node: tongueTwister, embedding })
 ```
 
 In this case, only `{ diffculty: "medium", age: "old" }` will be upserted to Pinecone, but the `tongueTwister` node itself will remain untouched.
@@ -362,7 +365,7 @@ This can be even more useful when implementing a custom `PineconeMetadataBuilder
 
 ### Hydrating nodes from the vector metadata
 
-Returning the ids of nodes is fun, but maybe you'd like to re-build the nodes themselves. There are two options that can be passed into `query` that enable this:
+Returning the ids of nodes is fun, but maybe you'd like to re-build the nodes themselves. There are two options that can be passed into `PineconeVectorStore`'s constructor that enable this:
 
 - `nodeHydrator`: a class conforming to NodeHydratorClass. Instances of this class must include a method of the signature `hydrate(vectorMetadata: PineconeMetadata) => BaseNode`;
 - `nodeHydratorOptions`: Something you want passed to the constructor of the `nodeHydrator`
@@ -389,8 +392,8 @@ const pineconeVectorMetadata = {
   nodeContent: '{"id_":"document-11","text":"secret data","metadata":{"author":"CIA"}}'
 };
 
-// Now we make our query and ask it to use the FullContentNodeHydrator to rebuild the nodes.
-const queryResults = await pineconeVectorStore.query(vectorStoreQuery, { nodeHydrator: FullContentNodeHydrator });
+const pineconeVectorStore = new PineconeVectorStore("speeches", { nodeHydrator: FullContentNodeHydrator })
+const queryResults = await pineconeVectorStore.query(vectorStoreQuery);
 const expectedDocument = new Document(originalNodeData);
 expectedDocument == queryResults.nodes[0];
 // => true

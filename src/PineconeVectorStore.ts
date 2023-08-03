@@ -10,7 +10,7 @@ import { PineconeClient, Vector as PineconeVector, ScoredVector as PineconeScore
 import { PineconeMetadata, SparseValuesBuilder, NaiveSparseValuesBuilder, utils, PineconeVectorsBuilder, PineconeVectorsBuilderOptions } from ".";
 import { DeleteRequest, VectorOperationsApi as PineconeIndex } from "@pinecone-database/pinecone/dist/pinecone-generated-ts-fetch";
 import { PineconeQueryBuilder, PineconeUpsertOptions, PineconeUpsertResults, PineconeVectorsUpsert, PineconeQueryBuilderOptions, PineconeUpsertVectorsRecord } from "./pinecone_api";
-import { NodeHydratorClass } from "vectors";
+import { NodeHydratorClass, PineconeMetadataBuilderClass, SimpleMetadataBuilder } from "./vectors";
 
 type PineconeVectorStoreOptions = {
   indexName: string;
@@ -19,6 +19,10 @@ type PineconeVectorStoreOptions = {
   // class that implements SparseValuesBuilder.
   // Can't to `typeof` with an interface :(
   sparseVectorBuilder?: { new(embeddings: number[]): SparseValuesBuilder };
+  nodeHydrator?: NodeHydratorClass,
+  nodeHydratorOptions?: Record<string, unknown>;
+  pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
+  pineconeMetadataBuilderOptions?: Record<string, unknown>;
 }
 
 type PineconeNamespaceSummary = {
@@ -42,6 +46,10 @@ export class PineconeVectorStore implements VectorStore {
   namespace: string | undefined;
   pineconeClient: PineconeClient | undefined;
   sparseVectorBuilder: { new(embeddings: number[]): SparseValuesBuilder };
+  nodeHydrator?: NodeHydratorClass;
+  nodeHydratorOptions: Record<string, unknown>;
+  pineconeMetadataBuilder: PineconeMetadataBuilderClass;
+  pineconeMetadataBuilderOptions: Record<string, unknown>;
 
   pineconeIndex: PineconeIndex | undefined;
   pineconeIndexStats: PineconeIndexStats | undefined;
@@ -51,6 +59,10 @@ export class PineconeVectorStore implements VectorStore {
     this.indexName = options.indexName;
     this.namespace = options.namespace;
     this.sparseVectorBuilder = options.sparseVectorBuilder || NaiveSparseValuesBuilder;
+    this.pineconeMetadataBuilder = options.pineconeMetadataBuilder || SimpleMetadataBuilder;
+    this.nodeHydrator = options.nodeHydrator;
+    this.nodeHydratorOptions = options.nodeHydratorOptions ?? {};
+    this.pineconeMetadataBuilderOptions = options.pineconeMetadataBuilderOptions ?? {};
   }
 
   /**
@@ -150,8 +162,9 @@ export class PineconeVectorStore implements VectorStore {
 
       // If they passed in a hydrator, we will use it to
       // reconstruct the nodes
-      if (kwargs?.nodeHydrator as NodeHydratorClass) {
-        const nodeHydrator = new kwargs.nodeHydrator(kwargs.nodeHydratorOptions);
+      if (this.nodeHydrator) {
+        //@ts-ignore
+        const nodeHydrator = new this.nodeHydrator(this.nodeHydratorOptions);
         vectorStoreQueryResult.nodes!.push(nodeHydrator.hydrate(vectorMetadata));
       }
     }, vectorStoreQueryResult)
@@ -277,10 +290,10 @@ export class PineconeVectorStore implements VectorStore {
         sparseVectorBuilder: this.sparseVectorBuilder
       }
 
-      if (upsertOptions.pineconeMetadataBuilder)
-        vectorBuilderOptions.pineconeMetadataBuilder = upsertOptions.pineconeMetadataBuilder;
-      if (upsertOptions.pineconeMetadataBuilderOptions)
-        vectorBuilderOptions.pineconeMetadataBuilderOptions = upsertOptions.pineconeMetadataBuilderOptions;
+      if (this.pineconeMetadataBuilder)
+        vectorBuilderOptions.pineconeMetadataBuilder = this.pineconeMetadataBuilder;
+      if (this.pineconeMetadataBuilderOptions)
+        vectorBuilderOptions.pineconeMetadataBuilderOptions = this.pineconeMetadataBuilderOptions;
 
       // Build the vectors for this node + embedding pair.
       const vectorsBuilder = new PineconeVectorsBuilder(

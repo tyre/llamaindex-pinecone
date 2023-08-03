@@ -54,8 +54,6 @@ export type PineconeUpsertOptions = {
   batchSize?: number;
   includeSparseValues?: boolean;
   splitEmbeddingsByDimension?: boolean;
-  pineconeMetadataBuilder?: PineconeMetadataBuilderClass;
-  pineconeMetadataBuilderOptions?: Record<string, unknown>;
 }
 
 export type PineconeUpsertResults = {

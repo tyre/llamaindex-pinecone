@@ -18,7 +18,7 @@ export class SimpleMetadataBuilder implements PineconeMetadataBuilder {
     return Object.entries(node.metadata).reduce((metadata, [key, value]): PineconeMetadata => {
       if (this.excludedMetadataKeys.includes(key)) {
         return metadata;
-      } 
+      }
       validateMetadata(key, value);
       metadata[key] = node.metadata[key];
       return metadata;
