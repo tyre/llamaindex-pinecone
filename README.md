@@ -205,7 +205,24 @@ For nodes with an embedding <= the dimension of the index, that's the same as th
 
 ```typescript
 vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to default namespace)")
+// => {
+//   namespace: "default",
+//   vectors: {
+//     "peter-piper": {
+//       id: "peter-piper",
+//       values: [1,2,3,3,4,5], // vector values
+//       sparseValues: { indicies: [98, 412, 5, 12, 4], values: [3, 2, 1, 4, 2]},
+//       metadata: {
+//         nodeId: "peter-piper",
+//         age: "old",
+//         diffculty: "medium"
+//       }
+//     }
+//   }
+// }
 ```
+
+The response contains a `vectors` object where the key is the vector id and the value is the vector.
 
 ### Deleting vectors
 
@@ -241,11 +258,11 @@ const vectorIds = [
 await client.deleteVectors(vectorIds, "Namespace (Optional: defaults to default namespace)");
 ```
 
-### Customization
+## Customization
 
 `PineconeVectorStore` works well out of the box. You might want some customization, though.
 
-#### Customizing the client
+### Customizing the client
 
 By default, these Pinecone variables are pulled from the environment:
 
@@ -263,7 +280,7 @@ await myPineconeClient.init({ apiKey: "something secure", environment: "somethin
 const vectorStore = new PineconeVectorStore({ indexName: "UFO-files", client: myPineconeClient })
 ```
 
-#### Customizing Sparse value generation
+### Customizing Sparse value generation
 
 The naive sparse value generation is, as its name implies, naive. Other methods, like BM25 or SPLADE, may be more effective. The vector store supports passing a class that knows how to generate sparse values.
 
@@ -289,11 +306,7 @@ const vectorStore = PineconeVectorStore("fancy-documents", { sparseValueBuilder:
 
 When calling `add` or `upsert` with `includeSparseValues: true`, that builder will be used to generate sparse values being sent to Pinecone.
 
-## Advanced uses
-
-### Add
-
-#### Custom Vector Metadata Format
+### Custom Vector Metadata Format
 
 By default, PineconeVectorStore will upsert metadata in the form of:
 
@@ -325,7 +338,7 @@ await vectorStore.add({ node: tongueTwister, emedding }, { pineconeMetadataBuild
 
 In fact, this exact implementation is included out of the box. `import { FullContentMetadataBuilder } from "pinecone-llamaindex"` today!
 
-#### Custom Vector Metadata Options
+### Custom Vector Metadata Options
 
 Out of the box, `PineconeVectorStore.add` and `.upsert` use `SimpleMetadataBuilder`. It essentially adds the `nodeId` and then splats the `node.metadata` into an object. For Pinecone metadata, the only acceptable keys are string and values must be strings, numbers, booleans, or arrays of those types.
 
@@ -346,6 +359,47 @@ await vectorStore.add({node: tongueTwister, embedding }, { pineconeMetadataBuild
 In this case, only `{ diffculty: "medium", age: "old" }` will be upserted to Pinecone, but the `tongueTwister` node itself will remain untouched.
 
 This can be even more useful when implementing a custom `PineconeMetadataBuilder` as seen above.
+
+### Hydrating nodes from the vector metadata
+
+Returning the ids of nodes is fun, but maybe you'd like to re-build the nodes themselves. There are two options that can be passed into `query` that enable this:
+
+- `nodeHydrator`: a class conforming to NodeHydratorClass. Instances of this class must include a method of the signature `hydrate(vectorMetadata: PineconeMetadata) => BaseNode`;
+- `nodeHydratorOptions`: Something you want passed to the constructor of the `nodeHydrator`
+
+Included in this package is `FullContentNodeHydrator` which will:
+
+- Look for a `nodeContent` property on the vector's metadata
+- Parse it as JSON
+- Look for a `nodeType`
+- Match it against `ObjectType` in the llamaindex package
+- If it is "DOCUMENT", "TEXT", or "INDEX", initialized that node type passing in the node content to its constructor.
+
+To see how this works, less look at an example:
+
+```typescript
+import { Document } from "llamaindex";
+import { FullContentNodeHydrator } from "llamaindex-pinecone";
+// Example node object when it was originally upserted
+const originalNodeData = { id_: "document-11", text: "secret data", metadata: { author: "CIA" } };
+// What its vector metadata was upserted as
+const pineconeVectorMetadata = {
+  nodeId: "document-11",
+  nodeType: "DOCUMENT",
+  nodeContent: '{"id_":"document-11","text":"secret data","metadata":{"author":"CIA"}}'
+};
+
+// Now we make our query and ask it to use the FullContentNodeHydrator to rebuild the nodes.
+const queryResults = await pineconeVectorStore.query(vectorStoreQuery, { nodeHydrator: FullContentNodeHydrator });
+const expectedDocument = new Document(originalNodeData);
+expectedDocument == queryResults.nodes[0];
+// => true
+```
+
+This pairs nicely with the example in "Custom Vector Metadata Format" above, which will upsert nodes in that format automatically.
+
+
+## Advanced uses
 
 ### Upsert
 
@@ -400,8 +454,7 @@ Note that the passing duplicate nodes—those with identical node ids—and embe
 
 By default, the embedding for a node is expected to be exactly as long as the dimension of the index. If not, `PineconeVectorStore` will throw an error.
 
-If you have a large embedding that you would like automatically, though naively, chunked into multiple vectors the size of the index's dimension, set `splitEmbeddingsByDimension` to `true`:
-
+If you have a large embedding that you would like automatically, though naively, chunked into multiple vectors the size of the index's dimension, set `splitEmbeddingsByDimension` to `true`. This is most useful for testing.
 
 Here's a contrived example with a pinecone index whose dimension is `1`:
 
@@ -452,43 +505,3 @@ The node's id is always included in the metadata, so deleting the document handl
 ##### With batching
 
 Note that for batched requests, the vectors for a given node can be spread across multiple requests. These requests can succeed or fail independently, so it is possible for a given node id to be in both the upserted and failed lists. Since these are upserts, it is safe to retry the failed nodes.
-
-### Querying
-
-#### Hydrating nodes from the vector metadata
-
-Returning the ids of nodes is fun, but maybe you'd like to re-build the nodes themselves. There are two options that can be passed into `query` that enable this:
-
-- `nodeHydrator`: a class conforming to NodeHydratorClass. Instances of this class must include a method of the signature `hydrate(vectorMetadata: PineconeMetadata) => BaseNode`;
-- `nodeHydratorOptions`: Something you want passed to the constructor of the `nodeHydrator`
-
-Included in this package is `FullContentNodeHydrator` which will:
-
-- Look for a `nodeContent` property on the vector's metadata
-- Parse it as JSON
-- Look for a `nodeType`
-- Match it against `ObjectType` in the llamaindex package
-- If it is "DOCUMENT", "TEXT", or "INDEX", initialized that node type passing in the node content to its constructor.
-
-To see how this works, less look at an example:
-
-```typescript
-import { Document } from "llamaindex";
-import { FullContentNodeHydrator } from "llamaindex-pinecone";
-// Example node object when it was originally upserted
-const originalNodeData = { id_: "document-11", text: "secret data", metadata: { author: "CIA" } };
-// What its vector metadata was upserted as
-const pineconeVectorMetadata = {
-  nodeId: "document-11",
-  nodeType: "DOCUMENT",
-  nodeContent: '{"id_":"document-11","text":"secret data","metadata":{"author":"CIA"}}'
-};
-
-// Now we make our query and ask it to use the FullContentNodeHydrator to rebuild the nodes.
-const queryResults = await pineconeVectorStore.query(vectorStoreQuery, { nodeHydrator: FullContentNodeHydrator });
-const expectedDocument = new Document(originalNodeData);
-expectedDocument == queryResults.nodes[0];
-// => true
-```
-
-This pairs nicely with the example in "Custom Vector Metadata Format" above, which will upsert nodes in that format automatically.
