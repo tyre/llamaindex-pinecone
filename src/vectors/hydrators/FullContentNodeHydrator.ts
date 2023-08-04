@@ -31,7 +31,10 @@ export class FullContentNodeHydrator implements NodeHydrator {
       case LlamaNodeType.DOCUMENT:
         return new LlamaDocument(nodeAsJson);
       case LlamaNodeType.INDEX:
-        return new LlamaIndexNode(nodeAsJson);
+        // Temporary workaround until IndexNode has its own constructor.
+        const newIndexNode = new LlamaIndexNode(nodeAsJson);
+        newIndexNode.indexId = nodeAsJson.indexId;
+        return newIndexNode;
       case LlamaNodeType.TEXT:
         return new LlamaTextNode(nodeAsJson);
       default:
