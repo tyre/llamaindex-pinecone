@@ -4,14 +4,7 @@ This repository contains a LlamaIndex-compatible vector store backed by [Pinecon
 
 ## Installation
 
-~~npm install llamaindex-pinecone~~ NPM package outdated until deps update. Until then:
-
-- Clone the typescript llamaindex package: `https://github.com/run-llama/LlamaIndexTS`
-- Clone this package `git clone git@github.com:tyre/llamaindex-pinecone.git`
-- In this repository, update `package.json` to include `"llamaindex":"file:path/to/LlamaIndexTS/packages/core"`
-- In your project, update the `package.json` to include: `"llamaindex":"file:path/to/LlamaIndexTS/packages/core", "llamaindex-pinecone": "file:path/to/llamaindex-pinecone",`
-
-At the end of the day, you need the edge version of the `llamaindex` package (from source) and update this package to point to it. Your package must point to the HEAD versions of each.
+`npm install llamaindex-pinecone`
 
 ### API config
 
