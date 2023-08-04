@@ -1,4 +1,4 @@
-import { PineconeMetadataBuilderClass, SparseValues } from "index";
+import { SparseValues } from "index";
 import { Vector as PineconeVector } from "@pinecone-database/pinecone";
 
 

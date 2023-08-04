@@ -163,7 +163,6 @@ export class PineconeVectorStore implements VectorStore {
       // If they passed in a hydrator, we will use it to
       // reconstruct the nodes
       if (this.nodeHydrator) {
-        //@ts-ignore
         const nodeHydrator = new this.nodeHydrator(this.nodeHydratorOptions);
         vectorStoreQueryResult.nodes!.push(nodeHydrator.hydrate(vectorMetadata));
       }
