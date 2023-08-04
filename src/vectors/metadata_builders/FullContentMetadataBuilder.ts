@@ -6,7 +6,7 @@ export class FullContentMetadataBuilder implements PineconeMetadataBuilder {
   buildMetadata(node: BaseNode): PineconeMetadata {
     const nodeContent = JSON.stringify(node);
     const metadata: PineconeMetadata = {
-      nodeId: node.id_,
+      nodeId: node.nodeId,
       nodeType: node.getType(),
       nodeContent,
     };

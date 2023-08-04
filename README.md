@@ -41,23 +41,50 @@ export interface VectorStore {
 }
 ```
 
-### Creating a store
-
-All you need to get started is the name of the index in Pinecone:
+### A basic integration
 
 ```typescript
-import { PineconeVectorStore } from "llamaindex-pinecone";
+import { storageContextFromDefaults, VectorStoreIndex } from "llamaindex";
+import { FullContentMetadataBuilder, FullContentNodeHydrator, PineconeVectorStore } from "llamaindex-pinecone";
 
-// Initialize with the name of an index in Pinecone 
-const vectorStore = new PineconeVectorStore({indexName: "speeches"});
+// Basic settings that have higher storage usage in Pinecone,
+// but allow for quick plug-and-play
+const easyModeSettings =   {
+  // Store the entire node as JSON in the vector's metadata
+  pineconeMetadataBuilder: FullContentMetadataBuilder,
+  // When reading a vector, re-build the node from that JSON
+  nodeHydrator: FullContentNodeHydrator 
+}
+
+// Initialize with the name of an index in Pinecone
+const vectorStore = new PineconeVectorStore("speeches", easyModeSettings);
+
+// define a storage context that's backed by our Pinecone vector store
+const storageContext = await storageContextFromDefaults({ vectorStore })
+
+// use that storage while we're loading documents
+const vectorStoreIndex = await VectorStoreIndex.fromDocuments(presidentialInauguralAddresses, { storageContext });
+
+// Make a query engine
+const queryEngine = vectorStoreIndex.asQueryEngine();
+// and ask it some questions!
+const queryResponse = await queryEngine.query("What is the role of the Founding Fathers across inaugural addresses?");
 ```
+
+And that's it!
+
+Below is deeper documentation on interacting with the store itself. There is ample opportunity for customization.
+
+## VectorQueryStore
 
 ### Adding a node to the store
 
-Now we want to add a node to the store. This requires us to pass a node and its embedding. The below example has already been tokenized:
+Adding a node to the store requires us to pass a node and its embedding. The below example has already been tokenized:
 
 ```typescript
 import { Document } from "llamaindex";
+
+const vectorStore = new PineconeVectorStore("tongue-twisters");
 
 const tongueTwister = new Document({text: "Peter Piper picked a peck of pickled peppers. A peck of pickled peppers Peter Piper picked. If Peter Piper picked a peck of pickled peppers, Where's the peck of pickled peppers Peter Piper picked?", id_: "peter-piper"})
 const embedding = [
