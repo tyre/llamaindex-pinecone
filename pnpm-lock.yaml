@@ -15,8 +15,8 @@ dependencies:
     specifier: 8.2.0
     version: 8.2.0
   llamaindex:
-    specifier: 0.0.0-20230802145626
-    version: 0.0.0-20230802145626
+    specifier: 0.0.16
+    version: 0.0.16
   protobufjs:
     specifier: ~7.2.4
     version: 7.2.4
@@ -1480,7 +1480,9 @@ packages:
 
   /base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
+    requiresBuild: true
     dev: false
+    optional: true
 
   /binary-extensions@2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
@@ -2911,12 +2913,6 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /js-tiktoken@1.0.7:
-    resolution: {integrity: sha512-biba8u/clw7iesNEWLOLwrNGoBP2lA+hTaBLs/D45pJdUPFXyxD6nhcDVtADChghv4GgyAiMKYMiRx7x6h7Biw==}
-    dependencies:
-      base64-js: 1.5.1
-    dev: false
-
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
     dev: true
@@ -2984,14 +2980,13 @@ packages:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
     dev: true
 
-  /llamaindex@0.0.0-20230802145626:
-    resolution: {integrity: sha512-KHVQ2/Cs5lcrPb8C1+moQykn9TrPmD+7RGDt7v0cp5GBYTGI4QPbCH2iNg01lTkIZpZ/LdZU0lLJ7twth7MpGw==}
+  /llamaindex@0.0.16:
+    resolution: {integrity: sha512-zQa3qGu0SuRrprd9yCo5m5zFBHS4gTyqXlwUaL/aJoiO1sv9o4SQ3xOEZNciWvliHohu5uIkaiOwB85JfZ5eVQ==}
     engines: {node: '>=18.0.0'}
     dependencies:
       '@anthropic-ai/sdk': 0.5.9
-      js-tiktoken: 1.0.7
       lodash: 4.17.21
-      openai: 4.0.0-beta.6
+      openai: 4.0.0-beta.8
       pdf-parse: 1.1.1
       replicate: 0.14.1
       tiktoken-node: 0.0.6
@@ -3278,8 +3273,8 @@ packages:
     dev: false
     optional: true
 
-  /openai@4.0.0-beta.6:
-    resolution: {integrity: sha512-sZscRgs6nhBgIt0qcK8XB2PGga6V0Qy9rQn/vKesox/laQDs9tMaOi6rsDhHq15aXQJPROfEB0K9SZoCuyWbSw==}
+  /openai@4.0.0-beta.8:
+    resolution: {integrity: sha512-bXBxUK2B288GlLckjnpT+UgyyddP+f4JIT5/df95C6eeqQhf5UkuN41Z3uf/6unPvR8Tthm4jJje1fA0OgsDEw==}
     dependencies:
       '@types/node': 18.17.1
       '@types/node-fetch': 2.6.4
