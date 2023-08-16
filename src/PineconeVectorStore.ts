@@ -12,7 +12,7 @@ import { DeleteRequest, VectorOperationsApi as PineconeIndex } from "@pinecone-d
 import { PineconeQueryBuilder, PineconeUpsertOptions, PineconeUpsertResults, PineconeVectorsUpsert, PineconeQueryBuilderOptions, PineconeUpsertVectorsRecord } from "./pinecone_api";
 import { NodeHydratorClass, PineconeMetadataBuilderClass, SimpleMetadataBuilder } from "./vectors";
 
-type PineconeVectorStoreOptions = {
+export type PineconeVectorStoreOptions = {
   indexName: string;
   pineconeClient?: PineconeClient;
   namespace?: string;

@@ -1,6 +1,6 @@
 import { SimpleMetadataBuilder } from "../../../src";
 import { Document } from 'llamaindex';
-import { PineconeMetadata } from 'pinecone_api';
+import { PineconeMetadata } from '../../../src/pinecone_api';
 
 describe("SimpleMetadataBuilder", () => {
   let node: Document;

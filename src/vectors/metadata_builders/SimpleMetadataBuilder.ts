@@ -1,5 +1,5 @@
 import { BaseNode } from 'llamaindex';
-import { PineconeMetadata } from 'pinecone_api';
+import { PineconeMetadata } from '../../pinecone_api';
 import { PineconeMetadataBuilder } from './types';
 import { validateMetadata } from './utils';
 

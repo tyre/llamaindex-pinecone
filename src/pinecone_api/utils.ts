@@ -1,4 +1,4 @@
-import { PineconeEnv } from "pinecone_api/types";
+import { PineconeEnv } from "./types";
 /*
   * This function is used to get the Pinecone environment variables from the
   * environment. It is used by the PineconeVectorStore constructor to initialize

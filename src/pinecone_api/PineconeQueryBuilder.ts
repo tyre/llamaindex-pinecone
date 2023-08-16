@@ -1,6 +1,6 @@
 import { MetadataFilters } from "llamaindex";
 import { QueryRequest } from "@pinecone-database/pinecone";
-import { SparseValues } from "vectors";
+import { SparseValues } from "../vectors";
 import { PineconeMetadataFilters, PineconeMetadataFilterKey } from "./types";
 
 

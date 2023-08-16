@@ -4,7 +4,7 @@ import {
   IndexNode as LlamaIndexNode,
   TextNode as LlamaTextNode
 } from "llamaindex";
-import { PineconeMetadata } from "pinecone_api";
+import { PineconeMetadata } from "../../../src/pinecone_api";
 import { FullContentNodeHydrator } from '../../../src/vectors/hydrators';
 
 // export type NodeHydratorClass = {

@@ -5,7 +5,7 @@ import {
   IndexNode as LlamaIndexNode,
   TextNode as LlamaTextNode
 } from "llamaindex";
-import { PineconeMetadata } from "pinecone_api";
+import { PineconeMetadata } from "../../pinecone_api";
 
 
 export interface NodeHydratorClass {
