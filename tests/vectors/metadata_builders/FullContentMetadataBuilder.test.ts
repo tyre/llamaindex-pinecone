@@ -15,7 +15,7 @@ describe("FullContentMetadataBuilder", () => {
     const builder = new FullContentMetadataBuilder();
     const metadata: PineconeMetadata = builder.buildMetadata(node);
     expect(metadata).toEqual({
-      nodeId: node.nodeId,
+      nodeId: node.id_,
       nodeType: node.getType(),
       nodeContent: JSON.stringify(node)
     });

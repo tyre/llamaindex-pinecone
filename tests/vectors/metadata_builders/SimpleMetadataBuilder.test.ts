@@ -21,7 +21,7 @@ describe("SimpleMetadataBuilder", () => {
     it("should return a PineconeMetadata object with the nodeId and metadata", () => {
       const metadata: PineconeMetadata = builder.buildMetadata(node);
       expect(metadata).toEqual({
-        nodeId: node.nodeId,
+        nodeId: node.id_,
         ...node.metadata
       });
     });
@@ -51,7 +51,7 @@ describe("SimpleMetadataBuilder", () => {
       builder = new SimpleMetadataBuilder({ excludedMetadataKeys: ["metadataKey"] });
       const metadata: PineconeMetadata = builder.buildMetadata(node);
       expect(metadata).toEqual({
-        nodeId: node.nodeId,
+        nodeId: node.id_,
         metadataKey2: "metadataValue2"
       });
     });

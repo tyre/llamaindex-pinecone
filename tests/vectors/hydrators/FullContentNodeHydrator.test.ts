@@ -57,7 +57,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaDocument);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaDocument).text).toEqual('content');
     });
 
@@ -73,7 +73,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaIndexNode);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaIndexNode).indexId).toEqual('index-id');
     });
 
@@ -90,7 +90,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaTextNode);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaTextNode).text).toEqual('some text!');
     });
 

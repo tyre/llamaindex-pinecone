@@ -22,6 +22,6 @@ export class SimpleMetadataBuilder implements PineconeMetadataBuilder {
       validateMetadata(key, value);
       metadata[key] = node.metadata[key];
       return metadata;
-    }, { nodeId: node.nodeId } as PineconeMetadata);
+    }, { nodeId: node.id_ } as PineconeMetadata);
   }
 }

@@ -221,7 +221,7 @@ As we've seen, the response is an object with a key `matches` and an array of sc
 Simple stuff.
 
 Note: this fetches vectors, not vectors for a node.
-For nodes with an embedding <= the dimension of the index, that's the same as the `node.nodeId`.
+For nodes with an embedding <= the dimension of the index, that's the same as the `node.id_`.
 
 ```typescript
 vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to default namespace)")
@@ -332,7 +332,7 @@ By default, PineconeVectorStore will upsert metadata in the form of:
 
 ```typescript
 {
-  nodeId: node.nodeId,
+  nodeId: node.id_,
   ...node.metadata
 }
 ```
