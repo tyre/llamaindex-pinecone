@@ -1,5 +1,4 @@
 import {
-  NodeWithEmbedding,
   BaseNode,
   VectorStoreQueryResult,
   VectorStoreQueryMode,
@@ -230,7 +229,7 @@ export class PineconeVectorStore implements VectorStore {
    */
   // The interface requires an `any` return type, so ignoring lint.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async add(embeddingResults: NodeWithEmbedding[], kwargs?: any): Promise<string[]> {
+  async add(embeddingResults: BaseNode[], kwargs?: any): Promise<string[]> {
     const upsertResults = await this.upsert(embeddingResults, kwargs);
     return upsertResults.upsertedNodeIds;
   }
@@ -245,7 +244,7 @@ export class PineconeVectorStore implements VectorStore {
    * then upserts them into the index.
    * Optionally includes sparse values and pads embeddings to the index's dimension.
    * 
-   * @param {NodeWithEmbedding[]} nodesWithEmbeddings - an array of Nodes with embeddings.
+   * @param {BaseNode[]} nodesWithEmbeddings - an array of Nodes with embeddings.
    * @param {PineconeUpsertOptions} upsertOptions - options for the upsert operation, like
    *    batch size and whether to include sparse values.
    * @returns {PineconeUpsertResults} - an object that includes:
@@ -266,7 +265,7 @@ export class PineconeVectorStore implements VectorStore {
    * 
   */
   async upsert(
-    nodesWithEmbeddings: NodeWithEmbedding[],
+    nodesWithEmbeddings: BaseNode[],
     upsertOptions: PineconeUpsertOptions = this.DEFAULT_UPSERT_OPTIONS
   ): Promise<PineconeUpsertResults> {
     const builtVectorsByNode: PineconeUpsertVectorsRecord = { totalVectorCount: 0, vectorsByNode: {} };
@@ -276,10 +275,10 @@ export class PineconeVectorStore implements VectorStore {
     // Loop over each of the nodes with embeddings, build vectors. We keep
     // a dictionary of {node => [vectors]} to track which vectors belong to which nodes
     for (const nodeWithEmbedding of nodesWithEmbeddings) {
-      const node = nodeWithEmbedding.node;
+      const node = nodeWithEmbedding;
       const embedding = nodeWithEmbedding.embedding;
       if (!embedding) {
-        throw new Error(`Node ${node.nodeId} does not have an embedding.`);
+        throw new Error(`Node ${node.id_} does not have an embedding.`);
       }
 
       const vectorBuilderOptions: PineconeVectorsBuilderOptions = {
@@ -302,7 +301,7 @@ export class PineconeVectorStore implements VectorStore {
       );
       const vectors = vectorsBuilder.buildVectors()
       builtVectorsByNode.totalVectorCount += vectors.length;
-      builtVectorsByNode.vectorsByNode[node.nodeId] = vectors;
+      builtVectorsByNode.vectorsByNode[node.id_] = vectors;
     }
 
     const vectorsUpsert = new PineconeVectorsUpsert(await this.getIndex(), upsertOptions)
