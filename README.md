@@ -37,31 +37,86 @@ export interface VectorStore {
 ### A basic integration
 
 ```typescript
-import { storageContextFromDefaults, VectorStoreIndex } from "llamaindex";
-import { FullContentMetadataBuilder, FullContentNodeHydrator, PineconeVectorStore } from "llamaindex-pinecone";
+import fs from "fs/promises";
+import {
+  Document,
+  storageContextFromDefaults,
+  VectorStoreIndex,
+} from "llamaindex";
+import {
+  FullContentMetadataBuilder,
+  FullContentNodeHydrator,
+  PineconeVectorStore,
+  PineconeVectorStoreOptions,
+} from "llamaindex-pinecone";
+import { PineconeClient } from "@pinecone-database/pinecone";
 
-// Basic settings that have higher storage usage in Pinecone,
-// but allow for quick plug-and-play
-const easyModeSettings =   {
-  // Store the entire node as JSON in the vector's metadata
-  pineconeMetadataBuilder: FullContentMetadataBuilder,
-  // When reading a vector, re-build the node from that JSON
-  nodeHydrator: FullContentNodeHydrator 
-}
+(async () => {
+  const essay = await fs.readFile(
+    "node_modules/llamaindex/examples/abramov.txt",
+    "utf-8"
+  );
 
-// Initialize with the name of an index in Pinecone
-const vectorStore = new PineconeVectorStore("speeches", easyModeSettings);
+  const pineconeClient = new PineconeClient();
 
-// define a storage context that's backed by our Pinecone vector store
-const storageContext = await storageContextFromDefaults({ vectorStore })
+  const apiKey = process.env["PINECONE_API_KEY"];
+  if (!apiKey) {
+    console.log("Please set PINECONE_API_KEY");
+    return;
+  }
 
-// use that storage while we're loading documents
-const vectorStoreIndex = await VectorStoreIndex.fromDocuments(presidentialInauguralAddresses, { storageContext });
+  const environment = process.env["PINECONE_ENVIRONMENT"];
+  if (!environment) {
+    console.log("Please set PINECONE_ENVIRONMENT");
+    return;
+  }
 
-// Make a query engine
-const queryEngine = vectorStoreIndex.asQueryEngine();
-// and ask it some questions!
-const queryResponse = await queryEngine.query("What is the role of the Founding Fathers across inaugural addresses?");
+  await pineconeClient.init({
+    apiKey,
+    environment,
+  });
+
+  // Set your index name.
+  const indexName = process.env["PINECONE_INDEX"] ?? "test";
+
+  // Basic settings that have higher storage usage in Pinecone,
+  // but allow for quick plug-and-play
+  const easyModeSettings: PineconeVectorStoreOptions = {
+    indexName,
+    pineconeClient,
+    // Store the entire node as JSON in the vector's metadata
+    pineconeMetadataBuilder: FullContentMetadataBuilder,
+    // When reading a vector, re-build the node from that JSON
+    nodeHydrator: FullContentNodeHydrator,
+  };
+
+  // Initialize with the name of an index in Pinecone
+  const vectorStore = new PineconeVectorStore(easyModeSettings);
+
+  // define a storage context that's backed by our Pinecone vector store
+  const storageContext = await storageContextFromDefaults({ vectorStore });
+
+  const stats = await vectorStore.getIndexStats();
+  if (stats.totalVectorCount !== 0) {
+    console.log(
+      `The index ${indexName} is not empty. Please run on an empty index.`
+    );
+    return;
+  }
+
+  // use that storage while we're loading documents
+  const vectorStoreIndex = await VectorStoreIndex.fromDocuments(
+    [new Document({ text: essay })],
+    { storageContext }
+  );
+
+  // Make a query engine
+  const queryEngine = vectorStoreIndex.asQueryEngine();
+  // and ask it some questions!
+  const queryResponse = await queryEngine.query("What did he do in college?");
+
+  console.log(queryResponse);
+})();
 ```
 
 And that's it!
