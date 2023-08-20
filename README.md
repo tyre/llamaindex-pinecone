@@ -4,7 +4,7 @@ This repository contains a LlamaIndex-compatible vector store backed by [Pinecon
 
 ## Installation
 
-`npm install llamaindex-pinecone`
+`npm install @llamaindex/pinecone`
 
 ### API config
 
@@ -48,7 +48,7 @@ import {
   FullContentNodeHydrator,
   PineconeVectorStore,
   PineconeVectorStoreOptions,
-} from "llamaindex-pinecone";
+} from "@llamaindex/pinecone";
 import { PineconeClient } from "@pinecone-database/pinecone";
 
 (async () => {
@@ -360,7 +360,7 @@ const vectorStore = new PineconeVectorStore({ indexName: "UFO-files", client: my
 The naive sparse value generation is, as its name implies, naive. Other methods, like BM25 or SPLADE, may be more effective. The vector store supports passing a class that knows how to generate sparse values.
 
 ```typescript
-import { SparseValues, SparseValueBuilder } from "llamaindex-pinecone";
+import { SparseValues, SparseValueBuilder } from "@llamaindex/pinecone";
 
 class FancySparseValueBuilder implements SparseValueBuilder {
   embeddings: Array<number>;
@@ -457,7 +457,7 @@ To see how this works, less look at an example:
 
 ```typescript
 import { Document } from "llamaindex";
-import { FullContentNodeHydrator } from "llamaindex-pinecone";
+import { FullContentNodeHydrator } from "@llamaindex/pinecone";
 // Example node object when it was originally upserted
 const originalNodeData = { id_: "document-11", text: "secret data", metadata: { author: "CIA" } };
 // What its vector metadata was upserted as
