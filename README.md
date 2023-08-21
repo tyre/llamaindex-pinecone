@@ -4,7 +4,7 @@ This repository contains a LlamaIndex-compatible vector store backed by [Pinecon
 
 ## Installation
 
-`npm install llamaindex-pinecone`
+`npm install @llamaindex/pinecone`
 
 ### API config
 
@@ -27,7 +27,7 @@ export interface VectorStore {
   storesText: boolean;
   isEmbeddingQuery?: boolean;
   client(): any;
-  add(embeddingResults: NodeWithEmbedding[]): Promise<string[]>;
+  add(embeddingResults: BaseNode[]): Promise<string[]>;
   delete(refDocId: string, deleteKwargs?: any): Promise<void>;
   query(query: VectorStoreQuery, kwargs?: any): Promise<VectorStoreQueryResult>;
   persist(persistPath: string, fs?: GenericFileSystem): Promise<void>;
@@ -37,31 +37,86 @@ export interface VectorStore {
 ### A basic integration
 
 ```typescript
-import { storageContextFromDefaults, VectorStoreIndex } from "llamaindex";
-import { FullContentMetadataBuilder, FullContentNodeHydrator, PineconeVectorStore } from "llamaindex-pinecone";
+import fs from "fs/promises";
+import {
+  Document,
+  storageContextFromDefaults,
+  VectorStoreIndex,
+} from "llamaindex";
+import {
+  FullContentMetadataBuilder,
+  FullContentNodeHydrator,
+  PineconeVectorStore,
+  PineconeVectorStoreOptions,
+} from "@llamaindex/pinecone";
+import { PineconeClient } from "@pinecone-database/pinecone";
 
-// Basic settings that have higher storage usage in Pinecone,
-// but allow for quick plug-and-play
-const easyModeSettings =   {
-  // Store the entire node as JSON in the vector's metadata
-  pineconeMetadataBuilder: FullContentMetadataBuilder,
-  // When reading a vector, re-build the node from that JSON
-  nodeHydrator: FullContentNodeHydrator 
-}
+(async () => {
+  const essay = await fs.readFile(
+    "node_modules/llamaindex/examples/abramov.txt",
+    "utf-8"
+  );
 
-// Initialize with the name of an index in Pinecone
-const vectorStore = new PineconeVectorStore("speeches", easyModeSettings);
+  const pineconeClient = new PineconeClient();
 
-// define a storage context that's backed by our Pinecone vector store
-const storageContext = await storageContextFromDefaults({ vectorStore })
+  const apiKey = process.env["PINECONE_API_KEY"];
+  if (!apiKey) {
+    console.log("Please set PINECONE_API_KEY");
+    return;
+  }
 
-// use that storage while we're loading documents
-const vectorStoreIndex = await VectorStoreIndex.fromDocuments(presidentialInauguralAddresses, { storageContext });
+  const environment = process.env["PINECONE_ENVIRONMENT"];
+  if (!environment) {
+    console.log("Please set PINECONE_ENVIRONMENT");
+    return;
+  }
 
-// Make a query engine
-const queryEngine = vectorStoreIndex.asQueryEngine();
-// and ask it some questions!
-const queryResponse = await queryEngine.query("What is the role of the Founding Fathers across inaugural addresses?");
+  await pineconeClient.init({
+    apiKey,
+    environment,
+  });
+
+  // Set your index name.
+  const indexName = process.env["PINECONE_INDEX"] ?? "test";
+
+  // Basic settings that have higher storage usage in Pinecone,
+  // but allow for quick plug-and-play
+  const easyModeSettings: PineconeVectorStoreOptions = {
+    indexName,
+    pineconeClient,
+    // Store the entire node as JSON in the vector's metadata
+    pineconeMetadataBuilder: FullContentMetadataBuilder,
+    // When reading a vector, re-build the node from that JSON
+    nodeHydrator: FullContentNodeHydrator,
+  };
+
+  // Initialize with the name of an index in Pinecone
+  const vectorStore = new PineconeVectorStore(easyModeSettings);
+
+  // define a storage context that's backed by our Pinecone vector store
+  const storageContext = await storageContextFromDefaults({ vectorStore });
+
+  const stats = await vectorStore.getIndexStats();
+  if (stats.totalVectorCount !== 0) {
+    console.log(
+      `The index ${indexName} is not empty. Please run on an empty index.`
+    );
+    return;
+  }
+
+  // use that storage while we're loading documents
+  const vectorStoreIndex = await VectorStoreIndex.fromDocuments(
+    [new Document({ text: essay })],
+    { storageContext }
+  );
+
+  // Make a query engine
+  const queryEngine = vectorStoreIndex.asQueryEngine();
+  // and ask it some questions!
+  const queryResponse = await queryEngine.query("What did he do in college?");
+
+  console.log(queryResponse);
+})();
 ```
 
 And that's it!
@@ -221,7 +276,7 @@ As we've seen, the response is an object with a key `matches` and an array of sc
 Simple stuff.
 
 Note: this fetches vectors, not vectors for a node.
-For nodes with an embedding <= the dimension of the index, that's the same as the `node.nodeId`.
+For nodes with an embedding <= the dimension of the index, that's the same as the `node.id_`.
 
 ```typescript
 vectorStore.client.fetch(["peter-piper"], "Namespace (Optional: defaults to default namespace)")
@@ -305,7 +360,7 @@ const vectorStore = new PineconeVectorStore({ indexName: "UFO-files", client: my
 The naive sparse value generation is, as its name implies, naive. Other methods, like BM25 or SPLADE, may be more effective. The vector store supports passing a class that knows how to generate sparse values.
 
 ```typescript
-import { SparseValues, SparseValueBuilder } from "llamaindex-pinecone";
+import { SparseValues, SparseValueBuilder } from "@llamaindex/pinecone";
 
 class FancySparseValueBuilder implements SparseValueBuilder {
   embeddings: Array<number>;
@@ -332,7 +387,7 @@ By default, PineconeVectorStore will upsert metadata in the form of:
 
 ```typescript
 {
-  nodeId: node.nodeId,
+  nodeId: node.id_,
   ...node.metadata
 }
 ```
@@ -402,7 +457,7 @@ To see how this works, less look at an example:
 
 ```typescript
 import { Document } from "llamaindex";
-import { FullContentNodeHydrator } from "llamaindex-pinecone";
+import { FullContentNodeHydrator } from "@llamaindex/pinecone";
 // Example node object when it was originally upserted
 const originalNodeData = { id_: "document-11", text: "secret data", metadata: { author: "CIA" } };
 // What its vector metadata was upserted as

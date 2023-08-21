@@ -4,7 +4,7 @@ import {
   IndexNode as LlamaIndexNode,
   TextNode as LlamaTextNode
 } from "llamaindex";
-import { PineconeMetadata } from "pinecone_api";
+import { PineconeMetadata } from "../../../src/pinecone_api";
 import { FullContentNodeHydrator } from '../../../src/vectors/hydrators';
 
 // export type NodeHydratorClass = {
@@ -57,7 +57,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaDocument);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaDocument).text).toEqual('content');
     });
 
@@ -73,7 +73,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaIndexNode);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaIndexNode).indexId).toEqual('index-id');
     });
 
@@ -90,7 +90,7 @@ describe('FullContentNodeHydrator', () => {
       const node = nodeHydrator.hydrate(vectorMetadata);
 
       expect(node).toBeInstanceOf(LlamaTextNode);
-      expect(node.nodeId).toEqual(vectorMetadata.nodeId);
+      expect(node.id_).toEqual(vectorMetadata.nodeId);
       expect((node as LlamaTextNode).text).toEqual('some text!');
     });
 

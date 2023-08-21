@@ -50,7 +50,7 @@ export class PineconeVectorsBuilder {
     let builtVectors: Array<Vector> = [];
 
     if (!this.splitEmbeddingsByDimension && this.embedding.length !== this.dimension) {
-      throw new Error(`Node ${this.node.nodeId} has an embedding of length ${this.embedding.length}, but the index has a dimension of ${this.dimension}.`);
+      throw new Error(`Node ${this.node.id_} has an embedding of length ${this.embedding.length}, but the index has a dimension of ${this.dimension}.`);
     }
     // If the embedding is less than or equal to the dimension,
     // build that one and move on. Its id will be the same as the node's nodeId.
@@ -70,9 +70,9 @@ export class PineconeVectorsBuilder {
   private buildVector(embedding: number[], vectorSubId?: number): Vector {
     let vectorId;
     if (vectorSubId || vectorSubId === 0) {
-      vectorId = `${this.node.nodeId}-${vectorSubId}`;
+      vectorId = `${this.node.id_}-${vectorSubId}`;
     } else {
-      vectorId = this.node.nodeId;
+      vectorId = this.node.id_;
     }
 
     const metadataBuilder = new this.pineconeMetadataBuilder(this.pineconeMetadataBuilderOptions);

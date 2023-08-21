@@ -5,7 +5,7 @@ import {
   IndexNode as LlamaIndexNode,
   TextNode as LlamaTextNode
 } from "llamaindex";
-import { PineconeMetadata } from "pinecone_api";
+import { PineconeMetadata } from "../../pinecone_api";
 
 
 export interface NodeHydratorClass {
@@ -30,11 +30,9 @@ export class FullContentNodeHydrator implements NodeHydrator {
     switch (vectorMetadata.nodeType as LlamaNodeType) {
       case LlamaNodeType.DOCUMENT:
         return new LlamaDocument(nodeAsJson);
-      case LlamaNodeType.INDEX:
-        // Temporary workaround until IndexNode has its own constructor.
-        const newIndexNode = new LlamaIndexNode(nodeAsJson);
-        newIndexNode.indexId = nodeAsJson.indexId;
-        return newIndexNode;
+      case LlamaNodeType.INDEX: {
+        return new LlamaIndexNode(nodeAsJson);
+      }
       case LlamaNodeType.TEXT:
         return new LlamaTextNode(nodeAsJson);
       default:

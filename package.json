@@ -1,23 +1,23 @@
 {
-  "name": "llamaindex-pinecone",
-  "version": "0.1.0",
+  "name": "@llamaindex/pinecone",
+  "version": "0.0.1",
   "description": "Pinecone integration for llamaindex",
   "dependencies": {
     "@pinecone-database/pinecone": "0.1.6",
     "@types/node": "20.4.5",
     "dotenv": "8.2.0",
-    "llamaindex": "0.0.0-20230802145626",
-    "typescript": "^5.1.6",
-    "protobufjs": "~7.2.4"
+    "llamaindex": "~0.0.19",
+    "protobufjs": "~7.2.4",
+    "typescript": "^5.1.6"
   },
   "devDependencies": {
     "@types/jest": "^29.5.3",
-    "@typescript-eslint/eslint-plugin": "^6.2.0",
-    "@typescript-eslint/parser": "^6.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
     "eslint": "^7.32.0",
-    "jest": "^29.6.1",
+    "jest": "^29.6.2",
     "ts-jest": "^29.1.1",
-    "tsup": "^7.1.0"
+    "tsup": "^7.2.0"
   },
   "optionalDependencies": {
     "@xenova/transformers": "2.4.2"

@@ -1,5 +1,5 @@
 import { Document } from "llamaindex";
-import { PineconeMetadata } from "pinecone_api";
+import { PineconeMetadata } from "../../../src/pinecone_api";
 import { FullContentMetadataBuilder } from "../../../src/vectors/metadata_builders";
 
 
@@ -15,7 +15,7 @@ describe("FullContentMetadataBuilder", () => {
     const builder = new FullContentMetadataBuilder();
     const metadata: PineconeMetadata = builder.buildMetadata(node);
     expect(metadata).toEqual({
-      nodeId: node.nodeId,
+      nodeId: node.id_,
       nodeType: node.getType(),
       nodeContent: JSON.stringify(node)
     });
